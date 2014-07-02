@@ -10,6 +10,7 @@
 static void system_clock_init (void)
 {
     /* Switch 1 MHz CPU clock to 8 MHz.  */
+	//CLKSEL0 |= (1<<2) | (1<<0); //?
     CLKPR = BIT (CLKPCE);
     CLKPR = 0;
 }
