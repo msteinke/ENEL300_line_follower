@@ -61,14 +61,6 @@ typedef uint8_t bool;
 #define LED1 0
 #define LED1_PIO PIO_DEFINE(PORT_C, 2)
 
-
-/* Infrared transmitter LED and receiver.  */
-#define IR_TX_LOW_PIO PIO_DEFINE(PORT_D, 3)
-#define IR_TX_HIGH_PIO PIO_DEFINE(PORT_D, 0)
-#define IR_RX_PIO PIO_DEFINE(PORT_D, 2)
-
-#define IR_MODULATION_FREQ 36e3
-
 void system_init (void);
 
 #endif

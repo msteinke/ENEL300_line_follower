@@ -34,3 +34,18 @@ Icon
 # Files that might appear on external disk
 .Spotlight-V100
 .Trashes
+
+*.eep
+line_follower/Debug/line_follower.hex
+line_follower/Debug/line_follower.elf
+line_follower/Debug/line_follower.d
+line_follower/Debug/line_follower.lss
+line_follower/Debug/line_follower.map
+line_follower/Debug/line_follower.o
+line_follower/Debug/line_follower.srec
+line_follower/Debug/makedep.mk
+line_follower/Debug/Makefile
+line_follower/Debug/pio.d
+line_follower/Debug/pio.o
+line_follower/Debug/system.d
+line_follower/Debug/system.o

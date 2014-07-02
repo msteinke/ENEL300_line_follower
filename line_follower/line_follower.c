@@ -20,9 +20,9 @@ int main(void)
 	while(1)
 	{
 		//TODO:: Please write your application code
-		PORTD++;
+		PORTD--;
  
-		for (i = 0; i < 90000; i++)
+		for (i = 0; i < 10000; i++)
 		{
 			continue;
 		}

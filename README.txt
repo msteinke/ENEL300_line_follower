@@ -1,17 +1,30 @@
-This project is to build a line following robot for the ENEL300 course. Code from Michael Hayes' UCFK4 is may be used in this project.
+This project is to build a line following robot for the 
+ENEL300 course. Code from Michael Hayes' UCFK4 is may be 
+used in this project.
 
 
 ==========================================================
 How to use the code on Windows 7
 ==========================================================
 Install AtmelStudio 6.2 (and Flip 3.4.7). Also install
-GitHub for Windows from windows.github.com.
+Git. I used GitHub for windows from : windows.github.com.
+I haven't figured out how to use the GUI yet, but a 
+shell does come with it.
 
-----------------------------------------------------------
-To Setup Git:
-----------------------------------------------------------
+Once the code compiles and produces a .hex file in 'Debug'
+folder, use Flip to connect to the board then load the
+hex file.
 
+Here's what I do:
+Make the board ready in three steps:
+Push and hold S3 (HW3, PD7)
+Push and release S2 (RESET, PC1)
+Release S3 (HW3, PD7)
 
+Then I click on line_follower.bat. You
+can add this as an 'external tool' in 
+atmel studio so that you don't need to
+switch between windows.
 
 
 
