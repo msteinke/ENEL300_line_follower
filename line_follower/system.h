@@ -7,9 +7,9 @@
 #define SYSTEM_H
 
 /* Data typedefs.  */
-#include <stdint.h>
+//#include <stdint.h>
 
-typedef uint8_t bool;
+typedef unsigned short bool;
 
 
 /* Useful macros.  */
@@ -23,12 +23,17 @@ typedef uint8_t bool;
 /* Clock frequency Hz.  */
 #define F_CPU 8000000
 
+
+//#define PC5 5
+//#define PC6 6
+
 /* Pin allocation for two motors. Choose 
    from PB7, PD0, PC5 and PC6.*/
 #define MOTOR_PIN_L_FWD PB7
 #define MOTOR_PIN_L_RVSE PD0
-#define MOTOR_PIN_R_FWD PC5
-#define MOTOR_PIN_R_RVSE PC6
+#define MOTOR_PIN_R_FWD 6
+#define MOTOR_PIN_R_RVSE 5
+
 
 
 

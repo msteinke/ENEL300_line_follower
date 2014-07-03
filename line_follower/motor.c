@@ -20,9 +20,9 @@
 #elif MOTOR_PIN_L_FWD == PD0
     #define LEFT_FWD_DUTY OCR0B
 #elif MOTOR_PIN_L_FWD == PC6
-    #define LEFT_FWD_DUTY OCR1A
+    #define LEFT_FWD_DUTY OCR1AL
 #elif MOTOR_PIN_L_FWD == PC5
-    #define LEFT_FWD_DUTY OCR1B
+    #define LEFT_FWD_DUTY OCR1BL
 #else 
     #error "LEFT_FWD_DUTY is undefined"
 #endif
@@ -32,9 +32,9 @@
 #elif MOTOR_PIN_L_RVSE == PD0
     #define LEFT_RVSE_DUTY OCR0B
 #elif MOTOR_PIN_L_RVSE == PC6
-    #define LEFT_RVSE_DUTY OCR1A
+    #define LEFT_RVSE_DUTY OCR1AL
 #elif MOTOR_PIN_L_RVSE == PC5
-    #define LEFT_RVSE_DUTY OCR1B
+    #define LEFT_RVSE_DUTY OCR1BL
 #else
     #error "LEFT_RVSE_DUTY is undefined"
 #endif
@@ -44,9 +44,9 @@
 #elif MOTOR_PIN_R_FWD == PD0
     #define RIGHT_FWD_DUTY OCR0B
 #elif MOTOR_PIN_R_FWD == PC6
-    #define RIGHT_FWD_DUTY OCR1A
+    #define RIGHT_FWD_DUTY OCR1AL
 #elif MOTOR_PIN_R_FWD == PC5
-    #define RIGHT_FWD_DUTY OCR1B
+    #define RIGHT_FWD_DUTY OCR1BL
 #else
     #error "RIGHT_FWD_DUTY is undefined"
 #endif
@@ -56,9 +56,9 @@
 #elif MOTOR_PIN_R_RVSE == PD0
     #define RIGHT_RVSE_DUTY OCR0B
 #elif MOTOR_PIN_R_RVSE == PC6
-    #define RIGHT_RVSE_DUTY OCR1A
+    #define RIGHT_RVSE_DUTY OCR1AL
 #elif MOTOR_PIN_R_RVSE == PC5
-    #define RIGHT_RVSE_DUTY OCR1B
+    #define RIGHT_RVSE_DUTY OCR1BL
 #else
     #error "RIGHT_RVSE_DUTY is undefined"
 #endif
@@ -105,28 +105,31 @@ void motor_init_timer1(void)
 {
 	// Configure PWM 
 	// pins: OC.1A & OC.1B
-	DDRC |= (1<<PC6) | (1<<PC5); 
+	//DDRC |= (1<<PC6) | (1<<PC5); 
+	DDRC |= (1<<6) | (1<<5); 
 	
-	TCCR0A = (1<<COM0A1) |
-			(0<<COM0A0) |
-			(1<<COM0B1) |
-			(0<<COM0B0) |
-			//(1<<WGM02) |  // PWM phase correct mode 5
-			(0<<WGM01) | // PWM phase correct mode 5
-			(1<<WGM00);  // PWM phase correct mode 5
+	TCCR1A = (1<<COM1A1) |
+			(0<<COM1A0) |
+			(1<<COM1B1) |
+			(0<<COM1B0) |
+			(0<<COM1C1) |
+			(0<<COM1C0) |
+			(0<<WGM11) | // PWM phase correct 8bit mode 1
+			(1<<WGM10);  // PWM phase correct 8bitmode 1
 	
-	TCCR0B = //(0<<FOC0A) | // must disable these for PWM
+	TCCR1B = //(0<<FOC0A) | // must disable these for PWM
 			//(0<<FOC0B) | // must disable these for PWM
-			(0<<WGM02) | // PWM phase correct mode 5
-			(0<<CS02) | // divide clock by 64
-			(1<<CS01) | // divide clock by 64
-			(1<<CS00); //divide clock by 64
+			(0<<WGM13) |
+			(0<<WGM12) | // PWM phase correct 8bitmode 1
+			(0<<CS12) | // divide clock by 64
+			(1<<CS11) | // divide clock by 64
+			(1<<CS10); //divide clock by 64
 	
-	OCR0A = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PB7 %85
-	OCR0B = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PD0 %170
+	OCR1AL = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PB7 %85
+	OCR1BL = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PD0 %170
 	
-	TIMSK0 = 0x00; // disable interrupts
-	//TIMSK0 = 0x03; // enable interrupts
+	TIMSK1 = 0x00; // disable interrupts
+	//TIMSK1 = 0x03; // enable interrupts
 	
 }
 
@@ -136,7 +139,7 @@ void motor_init_timer1(void)
 void motor_init(void)
 {
 	motor_init_timer0();
-	//motor_init_timer1();
+	motor_init_timer1();
 }
 
 

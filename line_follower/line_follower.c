@@ -34,9 +34,11 @@ int main(void)
 	{
 		PORTD ^= PD2; // toggle an LED on PD2
 		
-		motor_set(j, j);
+		motor_set(-j, j);
+		//OCR1AL = j*2;;
+		//OCR1BL = j*2;
 		
-		for (i = 0; i < 5000; i++)
+		for (i = 0; i < 10000; i++)
 		{
 			continue;
 		}
@@ -53,3 +55,4 @@ int main(void)
 		j += k;
 	}
 }
+//65535
