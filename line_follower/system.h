@@ -7,7 +7,7 @@
 #define SYSTEM_H
 
 /* Data typedefs.  */
-//#include <stdint.h>
+#include <stdint.h>
 
 typedef unsigned short bool;
 

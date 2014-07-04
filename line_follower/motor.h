@@ -26,6 +26,10 @@ void motor_set(short left_speed, short right_speed);
 	@return none */
 void motor_stop(void);
 
-
+/** Simple test program that pulses the PWM
+    channels so that it is obvious if it works.
+	@param none
+	@return none */
+void motor_test(void);
 
 #endif /* MOTOR_H_ */

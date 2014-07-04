@@ -49,3 +49,9 @@ line_follower/Debug/pio.d
 line_follower/Debug/pio.o
 line_follower/Debug/system.d
 line_follower/Debug/system.o
+line_follower/Debug/adc.d
+*.d
+*.o
+*.o
+line_follower/Debug/motor.o
+line_follower/Debug/adc.d

@@ -125,6 +125,7 @@ void motor_init_timer1(void)
 			(1<<CS11) | // divide clock by 64
 			(1<<CS10); //divide clock by 64
 	
+	// write to the lower half of the 16 bit register.
 	OCR1AL = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PB7 %85
 	OCR1BL = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PD0 %170
 	
@@ -196,6 +197,60 @@ void motor_stop(void)
 {
 	motor_set(0,0);
 }
+
+
+/** Simple test program that pulses the PWM
+    channels so that it is obvious if it works.
+	@param none
+	@return none */
+void motor_test(void)
+{
+		long i = 0;
+		
+		short j = -127;
+		short k = 1;
+		
+		short x = 59;
+		short y = 1;
+		
+		while(1)
+		{
+			// set the PWM duty cycle.
+			motor_set(j, x);
+			
+			// delay loop
+			for (i = 0; i < 10000; i++)
+			{
+				continue;
+			}
+			
+			//
+			if (j == 127)
+			{
+				k = -1;
+			}
+			else if (j == -127)
+			{
+				k = 1;
+			}
+			//
+			if (x == 127)
+			{
+				y = -1;
+			}
+			else if (x == -127)
+			{
+				y = 1;
+			}
+			
+			// increment duty cycle
+			j += k;
+			x += y;
+		}
+}
+
+
+
 
 /*
 The Timer/Counter (TCNT0) and Output Compare Registers (OCR0A and OCR0B) are 8-bit
