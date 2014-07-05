@@ -55,3 +55,8 @@ line_follower/Debug/adc.d
 *.o
 line_follower/Debug/motor.o
 line_follower/Debug/adc.d
+line_follower/Debug/motor.o
+line_follower/Debug/motor.d
+line_follower/Debug/motor.o
+line_follower/Debug/motor.o
+line_follower/Debug/motor.d
