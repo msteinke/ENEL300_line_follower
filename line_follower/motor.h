@@ -28,6 +28,7 @@ void motor_stop(void);
 
 /** Simple test program that pulses the PWM
     channels so that it is obvious if it works.
+	An LED is on PB6 foor debugging.
 	@param none
 	@return none */
 void motor_test(void);

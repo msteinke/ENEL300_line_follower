@@ -95,6 +95,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="clock.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="clock.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="comparator.c">
       <SubType>compile</SubType>
     </Compile>

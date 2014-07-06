@@ -201,6 +201,7 @@ void motor_stop(void)
 
 /** Simple test program that pulses the PWM
     channels so that it is obvious if it works.
+	An LED is on PB6 foor debugging.
 	@param none
 	@return none */
 void motor_test(void)
@@ -212,6 +213,8 @@ void motor_test(void)
 		
 		short x = 59;
 		short y = 1;
+		
+		DDRB |= (1<<PB6);
 		
 		while(1)
 		{
@@ -246,6 +249,8 @@ void motor_test(void)
 			// increment duty cycle
 			j += k;
 			x += y;
+			
+			PORTB ^= (1<<PB6);
 		}
 }
 

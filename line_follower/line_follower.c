@@ -9,20 +9,22 @@
 #include <avr/io.h>
 #include <avr/interrupt.h> 
 #include "system.h"
-//#include "motor.h"
-#include "comparator.h"
+#include "motor.h"
+//#include "comparator.h"
 
 int main(void)
 {
 	system_init();
-	comparator_init(AIN4_MUX);
+	//motor_init();
 	
-    cli(); // disable all interrupts
-	//sei(); // Enable all interrupts
+    //cli(); // disable all interrupts
+	sei(); // Enable all interrupts
 	
-	comparator_test(AIN4_MUX);
+	//motor_test();
 	
-
+	
+	
+	DDRB |= (1<<PB6);
 	
 	while(1)
 	{
