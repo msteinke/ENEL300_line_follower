@@ -9,12 +9,6 @@
 #ifndef COMPARATOR_H_
 #define COMPARATOR_H_
 
-// must do this because it's not defined
-// else where for me.
-//#ifndef ACMUX
-	#define ACMUX _SFR_IO8(0x7D)
-//#endif
-
 typedef unsigned short bool;
 
 enum adc_pins {
@@ -26,26 +20,36 @@ enum adc_pins {
 	AIN6_MUX = 0x05, // Pin PD7
 };
 
-/** Initialize Analog comparator on AIN1
+/** Initialize Analog comparator on AINx
 	@param none
 	@return none */
-void comparator_init(void);
+void comparator_init(short mux);
 
 /** Changes the selected comparator pin
 	@param mux - configure mux register
 	@return none */
 void comparator_mux(short mux);
 
-/** Read the comparator value 
+/** Read the comparator value. If the voltage on 
+	AIN0 (PD1) is higher than on AINx then this
+	returns 1.
 	@param mux - chose which pin to measure on
 	@return - the comparator value, ACO. */
-bool comparator_read(short mux);
+bool comparator_higher_than(short mux);
+
+/** Turns off the comparator. this may save
+	power or you may wish to do this if you
+	want to use the pins for something else.
+	@param none
+	@return none */
+void comparator_disable(void);
+
 
 /** Simple test program for this module.
     Place a voltage on AIN0 (PD1)
-	and another voltage on AIN1 (PD2)
-	and an LED on pin PB7.
-	@param mux - configure mux register
+	and another voltage on a mux pin
+	and an LED on pin PB7 and PB6.
+	@param none
 	@return none */
 void comparator_test(short mux);
 

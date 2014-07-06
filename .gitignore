@@ -60,3 +60,7 @@ line_follower/Debug/motor.d
 line_follower/Debug/motor.o
 line_follower/Debug/motor.o
 line_follower/Debug/motor.d
+*.o
+*.d
+line_follower/Debug/motor.d
+line_follower/Debug/motor.o

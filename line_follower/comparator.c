@@ -12,23 +12,22 @@
 
 
 
-/** Initialize Analog comparator on AIN1
+/** Initialize Analog comparator on AINx
 	@param none
 	@return none */
-void comparator_init(void)
+void comparator_init(short mux)
 {
 	DDRD = 0x00;
-	ACSR = (1<<ACD) | // enable comparator
+	ACSR = (0<<ACD) | // enable comparator
 			(0<<ACBG) | // use AIN0 as comparator input
-			// ACO: Analog Comparator Output
-			// ACI: Analog Comparator Interrupt Flag
 			(0<<ACIE) | // ACIE: Analog Comparator Interrupt Enable
 			(0<<ACIC); // ACIC: Analog Comparator Input Capture Enable
 			
-	ACMUX = 0x00; // use AIN1
+	comparator_mux(mux);
 	
 	DIDR1 = 0xFF; // disable digital input on all AINx pins
-	//asdf
+	
+	DDRD &= ~(1<<PD1); // make AIN0 (PD1) an input
 }
 
 /** Changes the selected comparator pin
@@ -36,21 +35,37 @@ void comparator_init(void)
 	@return none */
 void comparator_mux(short mux)
 {
-	//
-	//ACMUX = mux;
+	// have to use a pointer because
+	// ACMUX  is not defined for reasons
+	// that are beyond my knowledge...
 	char* acmux;
 	acmux = 0x7D;
-	*acmux = 0x00;
+	*acmux = mux;
+	
+	//ACMUX = mux;
 }
 
-/** Read the comparator value 
+/** Read the comparator value. If the voltage on 
+	AIN0 (PD1) is higher than on AINx then this
+	returns 1.
 	@param mux - chose which pin to measure on
 	@return - the comparator value, ACO. */
-bool comparator_read(short mux)
+bool comparator_higher_than(short mux)
 {
 	comparator_mux(mux);
 	
-	return (ACSR & ACO);
+	return ACSR & (1<<ACO);
+}
+
+
+/** Turns off the comparator. this may save
+	power or you may wish to do this if you
+	want to use the pins for something else.
+	@param none
+	@return none */
+void comparator_disable(void)
+{
+	ACSR |= (1<<ACD);
 }
 
 
@@ -58,16 +73,18 @@ bool comparator_read(short mux)
 /** Simple test program for this module.
     Place a voltage on AIN0 (PD1)
 	and another voltage on a mux pin
-	and an LED on pin PB7.
-	@param mux - configure mux register
+	and an LED on pin PB7 and PB6.
+	@param none
 	@return none */
 void comparator_test(short mux)
 {
-	DDRB |= (1<<PB7);
+	DDRB |= (1<<PB7) | (1<<PB6);
+	
+	comparator_init(mux);
 	
 	while(1)
-	{	
-		if (!comparator_read(mux))
+	{
+		if ( comparator_higher_than(mux) )
 		{
 			PORTB |= (1<<PB7);
 		}
@@ -75,6 +92,8 @@ void comparator_test(short mux)
 		{
 			PORTB &= ~(1<<PB7);
 		}
+	
+		PORTB ^= (1<<PB6);
 	}
 }
 
