@@ -9,18 +9,21 @@
 #include <avr/io.h>
 #include <avr/interrupt.h> 
 #include "system.h"
-#include "motor.h"
+//#include "motor.h"
 //#include "comparator.h"
+#include "clock.h"
 
 int main(void)
 {
 	system_init();
-	motor_init();
+	//motor_init();
+	clock_init();
 	
     //cli(); // disable all interrupts
 	sei(); // Enable all interrupts
 	
-	motor_test();
+	//motor_test();
+	clock_test();
 	
 	
 	

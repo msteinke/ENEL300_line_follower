@@ -36,13 +36,29 @@
 	|	1024	| 7.8125		|
  */
 
-
+/** Initialize timer1 registers
+	You must enable global interrupts
+	to use this module.
+	@param none
+	@return none */
 void clock_init(void);
 
+/** Returns the time, in milliseconds,
+	that the system has been turned on.
+	@param none
+	@return time */
 unsigned long clock_get_ms(void);
 
+/** Sets the time to a desired time.
+	@param time
+	@return none */
 void clock_set_ms(unsigned long time);
 
+/** Simple test program to make sure that
+	the clock module works. Place an LED
+	on pin PB6. This should flash every second.
+	@param none
+	@return none */
 void clock_test(void);
 
 

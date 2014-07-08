@@ -19,16 +19,26 @@
  */
 static volatile unsigned long g_time_ms;
 
+/** Interrupt service routine that is called
+	every time OCR1A matches the value of timer1.*/
 ISR(TIMER1_COMPA_vect)
 {
 	g_time_ms++;
 }
 
+/** Sets the time to a desired time.
+	@param time
+	@return none */
 void clock_set_ms(unsigned long time)
 {
 	g_time_ms = time;
 }
 
+/** Initialize timer1 registers
+	You must enable global interrupts
+	to use this module.
+	@param none
+	@return none */
 void clock_init(void)
 {
 	// clear the time
@@ -68,12 +78,39 @@ void clock_init(void)
 	
 }
 
+/** Returns the time, in milliseconds,
+	that the system has been turned on.
+	@param none
+	@return time */
 unsigned long clock_get_ms(void)
 {
 	return g_time_ms;
 }
 
 
+/** Simple test program to make sure that
+	the clock module works. Place an LED
+	on pin PB6. This should flash every second.
+	@param none
+	@return none */
+void clock_test(void)
+{
+	volatile short i = 0;
+	DDRB |= (1<<PB6);
+	
+	while(1)
+	{
+		if( (clock_get_ms() % 1000) == 0)
+		{
+			PORTB ^= (1<<PB6);
+			// wait so that the LED doesn't toggle twice
+			for(i = 0; i <1000;i++)
+			{
+				continue;
+			}
+		}
+	}
+}
 /*
 from table 11-1, Reset and Interrupt Vectors:
 16 $001E TIMER1 COMPA Timer/Counter1 Compare Match A
