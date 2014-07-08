@@ -15,12 +15,12 @@
 int main(void)
 {
 	system_init();
-	//motor_init();
+	motor_init();
 	
     //cli(); // disable all interrupts
 	sei(); // Enable all interrupts
 	
-	//motor_test();
+	motor_test();
 	
 	
 	

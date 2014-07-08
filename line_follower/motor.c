@@ -10,57 +10,45 @@
 #include "system.h"
 //#include "pio.h"
 #include <avr/io.h>
+#include "pio.h"
 
 #define MOTOR_INIT_DUTY_CYCLE 0
 
+
+// check that everything has been defined
+#ifndef MOTOR_PIN_L_FWD
+#error "MOTOR_PIN_L_FWD is undefined"
+#endif
+
+#ifndef MOTOR_PIN_L_RVSE
+#error "MOTOR_PIN_L_RVSE is undefined"
+#endif
+
+#ifndef MOTOR_PIN_R_FWD
+#error "MOTOR_PIN_R_FWD is undefined"
+#endif
+
+#ifndef MOTOR_PIN_R_RVSE
+#error "MOTOR_PIN_R_RVSE is undefined"
+#endif
+
+
 // figure out which PWM register goes
 // with which assigned pin. 
-#if MOTOR_PIN_L_FWD == PB7
-    #define LEFT_FWD_DUTY OCR0A
-#elif MOTOR_PIN_L_FWD == PD0
-    #define LEFT_FWD_DUTY OCR0B
-#elif MOTOR_PIN_L_FWD == PC6
-    #define LEFT_FWD_DUTY OCR1AL
-#elif MOTOR_PIN_L_FWD == PC5
-    #define LEFT_FWD_DUTY OCR1BL
+#if MOTOR_PIN_L_PWM == PB7
+    #define LEFT_DUTY OCR0A
+#elif MOTOR_PIN_L_PWM == PD0
+    #define LEFT_DUTY OCR0B
 #else 
-    #error "LEFT_FWD_DUTY is undefined"
+    #error "MOTOR_PIN_L_PWM is undefined"
 #endif
 
-#if MOTOR_PIN_L_RVSE == PB7
-    #define LEFT_RVSE_DUTY OCR0A
-#elif MOTOR_PIN_L_RVSE == PD0
-    #define LEFT_RVSE_DUTY OCR0B
-#elif MOTOR_PIN_L_RVSE == PC6
-    #define LEFT_RVSE_DUTY OCR1AL
-#elif MOTOR_PIN_L_RVSE == PC5
-    #define LEFT_RVSE_DUTY OCR1BL
+#if MOTOR_PIN_R_PWM == PB7
+    #define RIGHT_DUTY OCR0A
+#elif MOTOR_PIN_R_PWM == PD0
+    #define RIGHT_DUTY OCR0B
 #else
-    #error "LEFT_RVSE_DUTY is undefined"
-#endif
-
-#if MOTOR_PIN_R_FWD == PB7
-    #define RIGHT_FWD_DUTY OCR0A
-#elif MOTOR_PIN_R_FWD == PD0
-    #define RIGHT_FWD_DUTY OCR0B
-#elif MOTOR_PIN_R_FWD == PC6
-    #define RIGHT_FWD_DUTY OCR1AL
-#elif MOTOR_PIN_R_FWD == PC5
-    #define RIGHT_FWD_DUTY OCR1BL
-#else
-    #error "RIGHT_FWD_DUTY is undefined"
-#endif
-
-#if MOTOR_PIN_R_RVSE == PB7
-    #define RIGHT_RVSE_DUTY OCR0A
-#elif MOTOR_PIN_R_RVSE == PD0
-    #define RIGHT_RVSE_DUTY OCR0B
-#elif MOTOR_PIN_R_RVSE == PC6
-    #define RIGHT_RVSE_DUTY OCR1AL
-#elif MOTOR_PIN_R_RVSE == PC5
-    #define RIGHT_RVSE_DUTY OCR1BL
-#else
-    #error "RIGHT_RVSE_DUTY is undefined"
+    #error "MOTOR_PIN_R_PWM is undefined"
 #endif
 
 
@@ -97,96 +85,96 @@ void motor_init_timer0(void)
 	//TIMSK0 = 0x03; // enable interrupts
 	
 }
-/** Initialize PWM channels on timer1;
-	PC5 and PC6.
-	@param none
-	@return none */
-void motor_init_timer1(void)
-{
-	// Configure PWM 
-	// pins: OC.1A & OC.1B
-	//DDRC |= (1<<PC6) | (1<<PC5); 
-	DDRC |= (1<<6) | (1<<5); 
-	
-	TCCR1A = (1<<COM1A1) |
-			(0<<COM1A0) |
-			(1<<COM1B1) |
-			(0<<COM1B0) |
-			(0<<COM1C1) |
-			(0<<COM1C0) |
-			(0<<WGM11) | // PWM phase correct 8bit mode 1
-			(1<<WGM10);  // PWM phase correct 8bitmode 1
-	
-	TCCR1B = //(0<<FOC0A) | // must disable these for PWM
-			//(0<<FOC0B) | // must disable these for PWM
-			(0<<WGM13) |
-			(0<<WGM12) | // PWM phase correct 8bitmode 1
-			(0<<CS12) | // divide clock by 64
-			(1<<CS11) | // divide clock by 64
-			(1<<CS10); //divide clock by 64
-	
-	// write to the lower half of the 16 bit register.
-	OCR1AL = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PB7 %85
-	OCR1BL = MOTOR_INIT_DUTY_CYCLE; // PWM duty cycle on PD0 %170
-	
-	TIMSK1 = 0x00; // disable interrupts
-	//TIMSK1 = 0x03; // enable interrupts
-	
-}
+
 
 /** Initialize motor PWM timers
 	@param none
 	@return none */
 void motor_init(void)
 {
+	pio_config_set (MOTOR_PIN_L_FWD, PIO_OUTPUT_LOW);
+	pio_config_set (MOTOR_PIN_L_RVSE, PIO_OUTPUT_LOW);
+	pio_config_set (MOTOR_PIN_R_FWD, PIO_OUTPUT_LOW);
+	pio_config_set (MOTOR_PIN_R_RVSE, PIO_OUTPUT_LOW);
+	
 	motor_init_timer0();
-	motor_init_timer1();
+	//motor_init_timer1();
+	
 }
 
 
-/** Control each motor from -127 to +127.
+/** Control motor from -255 to +255.
+	@param motor
+	@param duty 
+	@param direction */
+void motor_set_one(byte motor, byte duty, byte direction)
+{
+	if (motor == MOTOR_LEFT && direction == MOTOR_FWD)
+	{
+		LEFT_DUTY = duty;
+		
+		// BE CAREFUL!!
+		// Set low before high otherwise you'll make
+		// a short circuit inside the driver.
+		pio_output_low(MOTOR_PIN_L_RVSE);
+		pio_output_high(MOTOR_PIN_L_FWD);
+	}
+	else if (motor == MOTOR_LEFT && direction == MOTOR_RVSE)
+	{
+		LEFT_DUTY = duty;
+		
+		// BE CAREFUL!!
+		// Set low before high otherwise you'll make
+		// a short circuit inside the driver.
+		pio_output_low(MOTOR_PIN_L_FWD);
+		pio_output_high(MOTOR_PIN_L_RVSE);
+	}
+	else if (motor == MOTOR_RIGHT && direction == MOTOR_FWD)
+	{
+		RIGHT_DUTY = duty;
+		
+		// BE CAREFUL!!
+		// Set low before high otherwise you'll make
+		// a short circuit inside the driver.
+		pio_output_low(MOTOR_PIN_R_RVSE);
+		pio_output_high(MOTOR_PIN_R_FWD);
+	}
+	else if (motor == MOTOR_RIGHT && direction == MOTOR_RVSE)
+	{
+		RIGHT_DUTY = duty;
+		
+		// BE CAREFUL!!
+		// Set low before high otherwise you'll make
+		// a short circuit inside the driver.
+		pio_output_low(MOTOR_PIN_R_FWD);
+		pio_output_high(MOTOR_PIN_R_RVSE);
+	}
+}
+
+/** Control each motor from -255 to +255.
 	@param left_speed
 	@param right_speed */
 void motor_set(short left_speed, short right_speed)
 {
-	// PWM register goes from 0 to 255
-	// but I want to use a 'short' to save memory
-	// and for simplicity.
-	
-	
-	// set left motor speed
-	if (left_speed > 0)
+	// do left motor first
+	if (left_speed >= 0)
 	{
-		LEFT_FWD_DUTY = left_speed*2;
-		LEFT_RVSE_DUTY = 0;
+		motor_set_one(MOTOR_LEFT, left_speed, MOTOR_FWD);
 	}
 	else if (left_speed < 0)
 	{
-		LEFT_FWD_DUTY = 0;
-		LEFT_RVSE_DUTY = -left_speed*2;
-	}
-	else
-	{
-		LEFT_FWD_DUTY = 0;
-		LEFT_RVSE_DUTY = 0;
+		motor_set_one(MOTOR_LEFT, -left_speed, MOTOR_RVSE);
 	}
 	
-	// set right motor speed
-	if (right_speed > 0)
+	// now let's do the right motor
+	if (right_speed >= 0)
 	{
-		RIGHT_FWD_DUTY = right_speed*2;
-		RIGHT_RVSE_DUTY = 0;
+		motor_set_one(MOTOR_RIGHT, right_speed, MOTOR_FWD);
 	}
 	else if (right_speed < 0)
 	{
-		RIGHT_FWD_DUTY = 0;
-		RIGHT_RVSE_DUTY = -right_speed*2;
+		motor_set_one(MOTOR_RIGHT, -right_speed, MOTOR_RVSE);
 	}
-	else
-	{
-		RIGHT_FWD_DUTY = 0;
-		RIGHT_RVSE_DUTY = 0;
-	}	
 }
 
 /** calls motor_set and sets each motor speed
@@ -201,14 +189,14 @@ void motor_stop(void)
 
 /** Simple test program that pulses the PWM
     channels so that it is obvious if it works.
-	An LED is on PB6 foor debugging.
+	An LED is on PB6 for debugging.
 	@param none
 	@return none */
 void motor_test(void)
 {
 		long i = 0;
 		
-		short j = -127;
+		short j = -255;
 		short k = 1;
 		
 		short x = 59;
@@ -228,20 +216,20 @@ void motor_test(void)
 			}
 			
 			//
-			if (j == 127)
+			if (j == 255)
 			{
 				k = -1;
 			}
-			else if (j == -127)
+			else if (j == -255)
 			{
 				k = 1;
 			}
 			//
-			if (x == 127)
+			if (x == 255)
 			{
 				y = -1;
 			}
-			else if (x == -127)
+			else if (x == -255)
 			{
 				y = 1;
 			}
