@@ -34,7 +34,7 @@
 #define SENSOR_EMUX_VREF_PIN   PIO_DEFINE(PORT_D, 1) /*this is always PD1 (AIN0)*/
 
 // Definitions for the three colours that must be detected.
-typedef enum {WHITE, GREY, BLACK} colour_t; //colour_t my_strategy = IMMEDIATE;
+typedef enum {WHITE, GREY, BLACK} colour_t; 
 
 void sensor_init(void);
 

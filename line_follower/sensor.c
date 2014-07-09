@@ -71,7 +71,7 @@ void sensor_test(byte acmux)
 	{
 		data = sensor_read(acmux);
 		
-		if (sensor_read(acmux) == WHITE)
+		if (data == WHITE)
 		{
 			pio_output_high(PIO_DEFINE(PORT_B, 5));
 			pio_output_low(PIO_DEFINE(PORT_B, 4));
@@ -79,7 +79,7 @@ void sensor_test(byte acmux)
 			
 			pio_output_low(PIO_DEFINE(PORT_B, 6));
 		}
-		else if (sensor_read(acmux) == BLACK)
+		else if (data == BLACK)
 		{
 			pio_output_high(PIO_DEFINE(PORT_B, 3));
 			pio_output_low(PIO_DEFINE(PORT_B, 4));
@@ -87,7 +87,7 @@ void sensor_test(byte acmux)
 			
 			pio_output_low(PIO_DEFINE(PORT_B, 6));
 		}
-		else if (sensor_read(acmux) == GREY)
+		else if (data == GREY)
 		{
 			pio_output_high(PIO_DEFINE(PORT_B, 4));
 			pio_output_low(PIO_DEFINE(PORT_B, 5));
