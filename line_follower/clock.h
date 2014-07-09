@@ -61,5 +61,16 @@ void clock_set_ms(unsigned long time);
 	@return none */
 void clock_test(void);
 
+/** Disable timer1 interrupts so that
+	critical sections can be protected.
+	@param none
+	@return none*/
+void clock_disable_interrupt(void);
+
+/** Enable timer1 interrupts so that
+	critical sections can be protected.
+	@param none
+	@return none*/
+void clock_enable_interrupt(void);
 
 #endif /* CLOCK_H_ */

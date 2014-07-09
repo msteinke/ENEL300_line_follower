@@ -31,7 +31,11 @@ ISR(TIMER1_COMPA_vect)
 	@return none */
 void clock_set_ms(unsigned long time)
 {
+	//cli();
+	clock_disable_interrupt();
 	g_time_ms = time;
+	clock_enable_interrupt();
+	//sei();
 }
 
 /** Initialize timer1 registers
@@ -41,8 +45,6 @@ void clock_set_ms(unsigned long time)
 	@return none */
 void clock_init(void)
 {
-	// clear the time
-	clock_set_ms(0);
 	
 	// Configure PWM timer1
 	DDRC |= (1<<6) | (1<<5); 
@@ -76,6 +78,29 @@ void clock_init(void)
 	//OCR1A = 125;
 	//OCR1AL = 125;
 	
+	// clear the time
+	clock_set_ms(0);
+	
+}
+
+/** Disable timer1 interrupts so that
+	critical sections can be protected.
+	@param none
+	@return none*/
+void clock_disable_interrupt(void)
+{
+	//TIMSK1 &= ~(1<<OCIE1A);
+	TIMSK1 = 0x00; // this stop the time from changing completely!!?!
+	//continue;
+}
+
+/** Enable timer1 interrupts so that
+	critical sections can be protected.
+	@param none
+	@return none*/
+void clock_enable_interrupt(void)
+{
+	TIMSK1 |= (1<<OCIE1A);
 }
 
 /** Returns the time, in milliseconds,
@@ -84,7 +109,14 @@ void clock_init(void)
 	@return time */
 unsigned long clock_get_ms(void)
 {
-	return g_time_ms;
+	//cli();
+	clock_disable_interrupt();
+	//return g_time_ms;
+	unsigned long time = g_time_ms;
+	clock_enable_interrupt();
+	//sei();
+	
+	return time;
 }
 
 
@@ -96,19 +128,28 @@ unsigned long clock_get_ms(void)
 void clock_test(void)
 {
 	volatile short i = 0;
-	DDRB |= (1<<PB6);
+	DDRB |= (1<<PB6) | (1<<PB7);
+	clock_set_ms(0);
 	
 	while(1)
 	{
-		if( (clock_get_ms() % 1000) == 0)
+		if( (clock_get_ms() % 500) == 0)
 		{
-			PORTB ^= (1<<PB6);
+			PORTB ^= (1<<PB7);
+			
 			// wait so that the LED doesn't toggle twice
-			for(i = 0; i <1000;i++)
+			for(i = 0; i < 10000; i++)
 			{
 				continue;
 			}
 		}
+		
+		PORTB ^= (1<<PB6);
+		// wait so that the LED doesn't toggle twice
+		/*for(i = 0; i < 10000;i++)
+		{
+			continue;
+		}*/
 	}
 }
 /*
