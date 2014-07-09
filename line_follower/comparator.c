@@ -15,7 +15,7 @@
 /** Initialize Analog comparator on AINx
 	@param none
 	@return none */
-void comparator_init(short mux)
+void comparator_init()
 {
 	DDRD = 0x00;
 	ACSR = (0<<ACD) | // enable comparator
@@ -23,7 +23,7 @@ void comparator_init(short mux)
 			(0<<ACIE) | // ACIE: Analog Comparator Interrupt Enable
 			(0<<ACIC); // ACIC: Analog Comparator Input Capture Enable
 			
-	comparator_mux(mux);
+	//comparator_mux(mux);
 	
 	DIDR1 = 0xFF; // disable digital input on all AINx pins
 	
@@ -33,7 +33,7 @@ void comparator_init(short mux)
 /** Changes the selected comparator pin
 	@param mux - configure mux register
 	@return none */
-void comparator_mux(short mux)
+void comparator_mux(byte mux)
 {
 	// have to use a pointer because
 	// ACMUX  is not defined for reasons
@@ -50,11 +50,19 @@ void comparator_mux(short mux)
 	returns 1.
 	@param mux - chose which pin to measure on
 	@return - the comparator value, ACO. */
-bool comparator_higher_than(short mux)
+bool comparator_higher_than(byte mux)
 {
 	comparator_mux(mux);
 	
 	return ACSR & (1<<ACO);
+	/*if ((ACSR>>ACO) & 0x01)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}*/
 }
 
 
@@ -76,7 +84,7 @@ void comparator_disable(void)
 	and an LED on pin PB7 and PB6.
 	@param none
 	@return none */
-void comparator_test(short mux)
+void comparator_test(byte mux)
 {
 	DDRB |= (1<<PB7) | (1<<PB6);
 	

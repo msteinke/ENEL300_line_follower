@@ -11,23 +11,29 @@
 #include "system.h"
 //#include "motor.h"
 //#include "comparator.h"
-#include "clock.h"
+//#include "clock.h"
+#include "sensor.h"
 
 int main(void)
 {
+	DDRB |= (1<<PB6);
 	system_init();
 	//motor_init();
-	clock_init();
+	//clock_init();
+	sensor_init();
 	
-    //cli(); // disable all interrupts
-	sei(); // Enable all interrupts
+    cli(); // disable all interrupts
+	//sei(); // Enable all interrupts
+	//PORTB |= (1<<PB6);
 	
 	//motor_test();
-	clock_test();
+	//clock_test();
+	sensor_test(AIN3_MUX);
 	
 	
 	
-	DDRB |= (1<<PB6);
+	
+	
 	
 	while(1)
 	{
