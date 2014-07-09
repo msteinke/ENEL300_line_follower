@@ -66,9 +66,10 @@ void sensor_test(byte acmux)
 	pio_config_set(PIO_DEFINE(PORT_B, 3), PIO_OUTPUT_LOW); // black
 	
 	//comparator_init(acmux);
-	
+	colour_t data = GREY;
 	while(1)
 	{
+		data = sensor_read(acmux);
 		
 		if (sensor_read(acmux) == WHITE)
 		{
@@ -78,19 +79,19 @@ void sensor_test(byte acmux)
 			
 			pio_output_low(PIO_DEFINE(PORT_B, 6));
 		}
-		else if (sensor_read(acmux) == GREY)
-		{
-			pio_output_high(PIO_DEFINE(PORT_B, 4));
-			pio_output_low(PIO_DEFINE(PORT_B, 5));
-			pio_output_low(PIO_DEFINE(PORT_B, 3));
-			
-			pio_output_low(PIO_DEFINE(PORT_B, 6));
-		}
 		else if (sensor_read(acmux) == BLACK)
 		{
 			pio_output_high(PIO_DEFINE(PORT_B, 3));
 			pio_output_low(PIO_DEFINE(PORT_B, 4));
 			pio_output_low(PIO_DEFINE(PORT_B, 5));
+			
+			pio_output_low(PIO_DEFINE(PORT_B, 6));
+		}
+		else if (sensor_read(acmux) == GREY)
+		{
+			pio_output_high(PIO_DEFINE(PORT_B, 4));
+			pio_output_low(PIO_DEFINE(PORT_B, 5));
+			pio_output_low(PIO_DEFINE(PORT_B, 3));
 			
 			pio_output_low(PIO_DEFINE(PORT_B, 6));
 		}
