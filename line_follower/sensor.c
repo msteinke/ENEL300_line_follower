@@ -10,6 +10,12 @@
 #include "system.h"
 #include "pio.h"
 
+// delay AC read after switching mux
+#define PROPOGATION_DELAY 40
+
+/** Initialize the comparator and GPIO
+	@param none
+	@return none*/
 void sensor_init(void)
 {
 	comparator_init();
@@ -17,31 +23,50 @@ void sensor_init(void)
 	pio_config_set(SENSOR_EMUX_VREF_PIN, PIO_INPUT);
 }
 
+/** A delay loop, for a few clock cycles, to allow
+	time for the external mux to switch reference
+	voltages. This is a must!!
+	@param none
+	@return none*/
+void sensor_propogation_delay(void)
+{
+	for (volatile short i = 0; i < PROPOGATION_DELAY; i++)
+	{
+		continue;
+	}
+}
+
+
+/** determines if the measured voltage is darker
+	than grey.
+	@param internal mux pin
+	@return none*/
 bool higher_than_grey(byte acmux)
 {
 	pio_output_high(SENSOR_EMUX_SELECT_PIN); // 1.3V
+	sensor_propogation_delay();
 	
 	return comparator_higher_than(acmux);
 }
 
+/** Determines if the measured voltage is lighter
+	than grey.
+	@param none
+	@return none*/
 bool lower_than_grey(byte acmux)
 {
 	pio_output_low(SENSOR_EMUX_SELECT_PIN); // 3.1V
-	
+	sensor_propogation_delay();
+		
 	return !comparator_higher_than(acmux);
 }
 
+/** Determine if a ACMUX pin reads
+	WHITE, GREY or BLACK.
+	@param ACMUX pin
+	@return colour type*/
 colour_t sensor_read(byte acmux)
 {
-	//comparator_higher_than(sensorPin);
-	
-	// is it more than grey?
-	// is it less than grey?
-	// else it is grey
-	
-	//pio_output_high(SENSOR_EMUX_SELECT_PIN); // 1.3V
-	//pio_output_low(SENSOR_EMUX_SELECT_PIN); // 3.1V
-	
 	if (lower_than_grey(acmux))
 	{
 		return WHITE;
@@ -52,11 +77,15 @@ colour_t sensor_read(byte acmux)
 	}
 	else
 	{
-		return GREY;
+		return GREY; 
 	}
 }
 	
 
+/** Simple test program to see if this module
+	works or not. Requires (atleast) 3 LEDs.
+	@param ACMUX pin that has POT connected to it
+	@return none*/
 void sensor_test(byte acmux)
 {
 	pio_config_set(PIO_DEFINE(PORT_B, 6), PIO_OUTPUT_LOW);

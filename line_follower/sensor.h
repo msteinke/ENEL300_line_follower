@@ -36,10 +36,21 @@
 // Definitions for the three colours that must be detected.
 typedef enum {WHITE, GREY, BLACK} colour_t; 
 
+/** Initialize the comparator and GPIO
+	@param none
+	@return none*/
 void sensor_init(void);
 
-colour_t sensor_read(byte sensorPin);
+/** Determine if a ACMUX pin reads
+	WHITE, GREY or BLACK.
+	@param ACMUX pin
+	@return colour type*/
+colour_t sensor_read(byte acmux);
 
+/** Simple test program to see if this module
+	works or not. Requires (atleast) 3 LEDs.
+	@param ACMUX pin that has POT connected to it
+	@return none*/
 void sensor_test(byte acmux);
 
 
