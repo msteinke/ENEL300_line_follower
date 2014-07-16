@@ -17,6 +17,15 @@
 	Instead of using an external multiplexer, we could use GPIO
 	pins to power each IR sensor. i.e a transistor without an
 	applied voltage sends out zero volts. 
+	
+	
+	To use the test program sensor_test(byte mux)
+	use it like this:
+	sensor_test(AIN3_MUX); pin PD4
+	OR like this:
+	sensor_test(SENSOR_LEFT_PIN);
+	same goes for sensor read:
+	if (sensor_read(SENSOR_MIDDLE_PIN) == WHITE){}
 	*/
 
 #ifndef SENSOR_H_
