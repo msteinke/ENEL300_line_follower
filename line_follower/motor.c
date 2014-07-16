@@ -189,7 +189,8 @@ void motor_stop(void)
 
 /** Simple test program that pulses the PWM
     channels so that it is obvious if it works.
-	An LED is on PB6 for debugging.
+	An LED is on PB6 for debugging. PWM pins are
+	PB7 and PD0.
 	@param none
 	@return none */
 void motor_test(void)
@@ -202,7 +203,7 @@ void motor_test(void)
 		short x = 59;
 		short y = 1;
 		
-		DDRB |= (1<<PB6);
+		DDRD |= (1<<PD7);
 		
 		while(1)
 		{
@@ -210,7 +211,7 @@ void motor_test(void)
 			motor_set(j, x);
 			
 			// delay loop
-			for (i = 0; i < 10000; i++)
+			for (i = 0; i < 100000; i++)
 			{
 				continue;
 			}
@@ -218,7 +219,7 @@ void motor_test(void)
 			//
 			if (j == 255)
 			{
-				k = -1;
+				k = 1;
 			}
 			else if (j == -255)
 			{
@@ -227,7 +228,7 @@ void motor_test(void)
 			//
 			if (x == 255)
 			{
-				y = -1;
+				y = 1;
 			}
 			else if (x == -255)
 			{
@@ -238,7 +239,7 @@ void motor_test(void)
 			j += k;
 			x += y;
 			
-			PORTB ^= (1<<PB6);
+			PORTD ^= (1<<PD7);
 		}
 }
 

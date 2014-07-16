@@ -86,7 +86,7 @@ void comparator_disable(void)
 	@return none */
 void comparator_test(byte mux)
 {
-	DDRB |= (1<<PB7) | (1<<PB6);
+	DDRD |= (1<<PD5) | (1<<PD5);
 	
 	comparator_init(mux);
 	
@@ -94,14 +94,14 @@ void comparator_test(byte mux)
 	{
 		if ( comparator_higher_than(mux) )
 		{
-			PORTB |= (1<<PB7);
+			PORTD |= (1<<PD5);
 		}
 		else
 		{
-			PORTB &= ~(1<<PB7);
+			PORTD &= ~(1<<PD5);
 		}
 	
-		PORTB ^= (1<<PB6);
+		//PORTB ^= (1<<PD6);
 	}
 }
 

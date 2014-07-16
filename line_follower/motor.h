@@ -11,6 +11,7 @@
 
 #include "system.h"
 
+// should do this with enum...
 #define MOTOR_LEFT 0
 #define MOTOR_RIGHT 1
 #define MOTOR_FWD 2
@@ -19,13 +20,13 @@
 /* Pin allocation for two motors. Choose 
    from PB7 and PD0 for PWM. Any GPIO pin for 
    motor direction. */
-#define MOTOR_PIN_L_FWD PIO_DEFINE(PORT_D, 4)
-#define MOTOR_PIN_L_RVSE PIO_DEFINE(PORT_D, 3)
-#define MOTOR_PIN_R_FWD PIO_DEFINE(PORT_D, 2)
-#define MOTOR_PIN_R_RVSE PIO_DEFINE(PORT_D, 1)
+#define MOTOR_PIN_L_FWD PIO_DEFINE(PORT_B, 1)
+#define MOTOR_PIN_L_RVSE PIO_DEFINE(PORT_B, 6)
+#define MOTOR_PIN_R_FWD PIO_DEFINE(PORT_B, 5)
+#define MOTOR_PIN_R_RVSE PIO_DEFINE(PORT_C, 7)
 
-#define MOTOR_PIN_L_PWM PIO_DEFINE(PORT_B, 7)
-#define MOTOR_PIN_R_PWM PIO_DEFINE(PORT_D, 0)
+#define MOTOR_PIN_L_PWM PIO_DEFINE(PORT_D, 0)
+#define MOTOR_PIN_R_PWM PIO_DEFINE(PORT_B, 7)
 
 
 
@@ -49,7 +50,8 @@ void motor_stop(void);
 
 /** Simple test program that pulses the PWM
     channels so that it is obvious if it works.
-	An LED is on PB6 for debugging.
+	An LED is on PB6 for debugging. PWM pins are
+	PB7 and PD0.
 	@param none
 	@return none */
 void motor_test(void);
