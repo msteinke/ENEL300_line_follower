@@ -23,7 +23,7 @@ typedef unsigned char byte;
 /* Clock frequency Hz.  */
 #define F_CPU 8000000
 
-
+// THESE ACTUALLY DONT BELONG HERE
 // Comparator pins
 #define AIN1 = 0X01 //PIN PD2
 #define AIN2 = 0X02 //PIN PD3
