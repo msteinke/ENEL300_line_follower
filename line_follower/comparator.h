@@ -12,15 +12,7 @@
 #include "system.h"
 //typedef unsigned char bool;
 
-//AIN0_MUX --> PD1
-enum adc_pins {
-	AIN1_MUX = 0x00, // Pin PD2
-	AIN2_MUX = 0x01, // Pin PC2
-	AIN3_MUX = 0x02, // Pin PD4
-	AIN4_MUX = 0x03, // Pin PD5
-	AIN5_MUX = 0x04, // Pin PD6
-	AIN6_MUX = 0x05, // Pin PD7
-};
+
 
 /** Initialize Analog comparator on AINx
 	@param none
