@@ -24,6 +24,8 @@ static volatile unsigned long g_time_ms;
 ISR(TIMER1_COMPA_vect)
 {
 	g_time_ms++;
+	//PORTB ^= (1<<7);
+	//TIFR1 |= (0<<OCF1A);
 }
 
 /** Sets the time to a desired time.
@@ -36,6 +38,7 @@ void clock_set_ms(unsigned long time)
 	g_time_ms = time;
 	clock_enable_interrupt();
 	//sei();
+	
 }
 
 /** Initialize timer1 registers
@@ -125,31 +128,27 @@ unsigned long clock_get_ms(void)
 	on pin PB6. This should flash every second.
 	@param none
 	@return none */
+
 void clock_test(void)
 {
 	volatile short i = 0;
-	DDRB |= (1<<PB6) | (1<<PB7);
+	DDRB |= (1<<PB3) | (1<<PB4);
 	clock_set_ms(0);
 	
 	while(1)
 	{
 		if( (clock_get_ms() % 500) == 0)
 		{
-			PORTB ^= (1<<PB7);
+			PORTB ^= (1<<PB4);
 			
-			// wait so that the LED doesn't toggle twice
-			for(i = 0; i < 10000; i++)
-			{
-				continue;
-			}
 		}
 		
-		PORTB ^= (1<<PB6);
+		PORTB ^= (1<<PB3);
 		// wait so that the LED doesn't toggle twice
-		/*for(i = 0; i < 10000;i++)
+		for(i = 0; i < 100;i++)
 		{
 			continue;
-		}*/
+		}
 	}
 }
 /*

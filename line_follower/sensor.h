@@ -17,15 +17,6 @@
 	Instead of using an external multiplexer, we could use GPIO
 	pins to power each IR sensor. i.e a transistor without an
 	applied voltage sends out zero volts. 
-	
-	
-	To use the test program sensor_test(byte mux)
-	use it like this:
-	sensor_test(AIN3_MUX); pin PD4
-	OR like this:
-	sensor_test(SENSOR_LEFT_PIN);
-	same goes for sensor read:
-	if (sensor_read(SENSOR_MIDDLE_PIN) == WHITE){}
 	*/
 
 #ifndef SENSOR_H_
@@ -34,12 +25,12 @@
 #include "comparator.h"
 
 // IR sensor pin locations on ACMUX
-#define SENSOR_LEFT_PIN   AIN3_MUX
-#define SENSOR_MIDDLE_PIN AIN1_MUX
-#define SENSOR_RIGHT_PIN  AIN2_MUX
+#define SENSOR_LEFT_PIN   AIN5_MUX
+#define SENSOR_MIDDLE_PIN AIN4_MUX
+#define SENSOR_RIGHT_PIN  AIN3_MUX
 
 // Voltage reference pins on external mux
-#define SENSOR_EMUX_SELECT_PIN PIO_DEFINE(PORT_C, 4)
+#define SENSOR_EMUX_SELECT_PIN PIO_DEFINE(PORT_D, 2)
 #define SENSOR_EMUX_VREF_PIN   PIO_DEFINE(PORT_D, 1) /*this is always PD1 (AIN0)*/
 
 // Definitions for the three colours that must be detected.

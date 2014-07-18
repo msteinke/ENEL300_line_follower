@@ -88,11 +88,11 @@ colour_t sensor_read(byte acmux)
 	@return none*/
 void sensor_test(byte acmux)
 {
-	pio_config_set(PIO_DEFINE(PORT_D, 7), PIO_OUTPUT_LOW);
+	pio_config_set(PIO_DEFINE(PORT_B, 6), PIO_OUTPUT_LOW);
 	
-	pio_config_set(PIO_DEFINE(PORT_B, 0), PIO_OUTPUT_LOW); // white
-	pio_config_set(PIO_DEFINE(PORT_D, 5), PIO_OUTPUT_LOW); // grey
-	pio_config_set(PIO_DEFINE(PORT_D, 6), PIO_OUTPUT_LOW); // black
+	pio_config_set(PIO_DEFINE(PORT_B, 5), PIO_OUTPUT_LOW); // white
+	pio_config_set(PIO_DEFINE(PORT_B, 4), PIO_OUTPUT_LOW); // grey
+	pio_config_set(PIO_DEFINE(PORT_B, 3), PIO_OUTPUT_LOW); // black
 	
 	//comparator_init(acmux);
 	colour_t data = GREY;
@@ -102,21 +102,35 @@ void sensor_test(byte acmux)
 		
 		if (data == WHITE)
 		{
-			pio_output_high(PIO_DEFINE(PORT_B, 0));
-			pio_output_low(PIO_DEFINE(PORT_D, 5));
-			pio_output_low(PIO_DEFINE(PORT_D, 6));
+			pio_output_high(PIO_DEFINE(PORT_B, 5));
+			pio_output_low(PIO_DEFINE(PORT_B, 4));
+			pio_output_low(PIO_DEFINE(PORT_B, 3));
+			
+			pio_output_low(PIO_DEFINE(PORT_B, 6));
 		}
 		else if (data == BLACK)
 		{
-			pio_output_high(PIO_DEFINE(PORT_D, 6));
-			pio_output_low(PIO_DEFINE(PORT_B, 0));
-			pio_output_low(PIO_DEFINE(PORT_D, 5));
+			pio_output_high(PIO_DEFINE(PORT_B, 3));
+			pio_output_low(PIO_DEFINE(PORT_B, 4));
+			pio_output_low(PIO_DEFINE(PORT_B, 5));
+			
+			pio_output_low(PIO_DEFINE(PORT_B, 6));
 		}
 		else if (data == GREY)
 		{
-			pio_output_high(PIO_DEFINE(PORT_D, 5));
-			pio_output_low(PIO_DEFINE(PORT_D, 6));
-			pio_output_low(PIO_DEFINE(PORT_B, 0));
+			pio_output_high(PIO_DEFINE(PORT_B, 4));
+			pio_output_low(PIO_DEFINE(PORT_B, 5));
+			pio_output_low(PIO_DEFINE(PORT_B, 3));
+			
+			pio_output_low(PIO_DEFINE(PORT_B, 6));
+		}
+		else
+		{
+			pio_output_high(PIO_DEFINE(PORT_B, 6));
+			
+			pio_output_low(PIO_DEFINE(PORT_B, 3));
+			pio_output_low(PIO_DEFINE(PORT_B, 4));
+			pio_output_low(PIO_DEFINE(PORT_B, 5));
 		}
 		
 		//pio_output_toggle (PIO_DEFINE(PORT_B, 6));

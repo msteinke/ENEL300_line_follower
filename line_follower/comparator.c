@@ -50,9 +50,9 @@ void comparator_mux(byte mux)
 	returns 1.
 	@param mux - chose which pin to measure on
 	@return - the comparator value, ACO. */
-bool comparator_higher_than(byte mux)
+bool comparator_higher_than(byte AINx)
 {
-	comparator_mux(mux);
+	comparator_mux(AINx);
 	
 	return ACSR & (1<<ACO);
 	/*if ((ACSR>>ACO) & 0x01)
@@ -86,22 +86,24 @@ void comparator_disable(void)
 	@return none */
 void comparator_test(byte mux)
 {
-	DDRD |= (1<<PD5) | (1<<PD5);
+	DDRB |= (1<<4) | (1<<7);
 	
 	comparator_init(mux);
 	
+	unsigned short i = 0;
 	while(1)
 	{
 		if ( comparator_higher_than(mux) )
 		{
-			PORTD |= (1<<PD5);
+			PORTB |= (1<<PB4);
 		}
 		else
 		{
-			PORTD &= ~(1<<PD5);
+			PORTD &= ~(1<<PB4);
 		}
-	
-		//PORTB ^= (1<<PD6);
+		if (i % 8000 == 0)
+			PORTB ^= (1<<PB7);
+		i++;
 	}
 }
 

@@ -35,17 +35,17 @@
 
 // figure out which PWM register goes
 // with which assigned pin. 
-#if MOTOR_PIN_L_PWM == PB7
+#if MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_B, 7)
     #define LEFT_DUTY OCR0A
-#elif MOTOR_PIN_L_PWM == PD0
+#elif MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_D, 0)
     #define LEFT_DUTY OCR0B
 #else 
     #error "MOTOR_PIN_L_PWM is undefined"
 #endif
 
-#if MOTOR_PIN_R_PWM == PB7
+#if MOTOR_PIN_R_PWM == PIO_DEFINE(PORT_B, 7)
     #define RIGHT_DUTY OCR0A
-#elif MOTOR_PIN_R_PWM == PD0
+#elif MOTOR_PIN_R_PWM == PIO_DEFINE(PORT_D, 0)
     #define RIGHT_DUTY OCR0B
 #else
     #error "MOTOR_PIN_R_PWM is undefined"
@@ -189,8 +189,7 @@ void motor_stop(void)
 
 /** Simple test program that pulses the PWM
     channels so that it is obvious if it works.
-	An LED is on PB6 for debugging. PWM pins are
-	PB7 and PD0.
+	An LED is on PB6 for debugging.
 	@param none
 	@return none */
 void motor_test(void)
@@ -203,7 +202,7 @@ void motor_test(void)
 		short x = 59;
 		short y = 1;
 		
-		DDRD |= (1<<PD7);
+		DDRB |= (1<<PB6);
 		
 		while(1)
 		{
@@ -211,7 +210,7 @@ void motor_test(void)
 			motor_set(j, x);
 			
 			// delay loop
-			for (i = 0; i < 100000; i++)
+			for (i = 0; i < 10000; i++)
 			{
 				continue;
 			}
@@ -219,7 +218,7 @@ void motor_test(void)
 			//
 			if (j == 255)
 			{
-				k = 1;
+				k = -1;
 			}
 			else if (j == -255)
 			{
@@ -228,7 +227,7 @@ void motor_test(void)
 			//
 			if (x == 255)
 			{
-				y = 1;
+				y = -1;
 			}
 			else if (x == -255)
 			{
@@ -239,7 +238,7 @@ void motor_test(void)
 			j += k;
 			x += y;
 			
-			PORTD ^= (1<<PD7);
+			PORTB ^= (1<<PB6);
 		}
 }
 
