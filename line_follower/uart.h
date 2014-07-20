@@ -1,6 +1,13 @@
 /*
-simple asynchronus USART module
-Transmit only for debug
+uart.h
+
+Sam Stephenson
+
+17/7/14
+
+simple asynchronous USART module
+Transmit only
+for debug
 
 TX: PD3
 */
@@ -9,7 +16,6 @@ TX: PD3
 #define UART_H_
 
 #include "system.h"
-
 
 //sets up uart
 // for fosc = 8khz & 9600 baud

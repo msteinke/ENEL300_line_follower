@@ -42,9 +42,22 @@
    current is 40 mA.
  
  */
- 
+#define ADC_MAX 600
+
+#ifndef PC6_PIO
+#define PC6_PIO PIO_DEFINE(PORT_D, 5)
+#endif
+
 #ifndef ADC_CHARGE_PIO
 #define ADC_CHARGE_PIO PC6_PIO
+#endif
+
+#ifndef PD1_PIO
+#define PD1_PIO PIO_DEFINE(PORTD, 1)
+#endif
+
+#ifndef ADC_MEA_PIO
+#define ADC_MEA_PIO PD1_PIO
 #endif
  
 #ifndef ADC_CAPACITANCE
@@ -73,8 +86,11 @@ void adc_init(void)
     /* By default the analog comparator is enabled but let's enable it.  */
     ACSR &= BIT(7);
 	
-	//Set set charge capacitor as an output
-	DDRC |= (1<<6);
+	//Set disable output on ADC measurment pin
+	pio_config_set(ADC_MEA_PIO, PIO_INPUT);
+	
+	//Set charge capacitor as an output
+	pio_config_set(ADC_CHARGE_PIO, PIO_OUTPUT_LOW);
 }
  
  
@@ -92,21 +108,36 @@ void adc_disable(uint8_t adc_channel)
 }
  
  
-uint8_t adc_measure(uint8_t adc_channel)
+uint16_t adc_measure(uint8_t adc_channel)
 {
-    uint8_t count;
+    uint16_t count;
  
     count = 0;
  
     /* Select desired channel.  */
     ACMUX = adc_channel - 1;
+	
+	//pio_config_set(ADC_MEA_PIO, PIO_INPUT);
+	DDRD &= ~BIT(1);
  
     pio_output_high (ADC_CHARGE_PIO);
  
     while (! (ACSR & BIT(ACO)))
-        count++;
+    {
+		count++;
+		if (count > ADC_MAX)
+		{
+			break;
+		}
+	}		
  
-    pio_output_low (ADC_CHARGE_PIO);    
+	//Stop charging capacitor
+    pio_output_low (ADC_CHARGE_PIO);
+	
+	//Discharge capacitor through PD0
+	//pio_config_set(ADC_MEA_PIO, PIO_OUTPUT_LOW);
+	PORTD &= ~BIT(1);
+	DDRD |= BIT(1); 
  
     return count;
 }

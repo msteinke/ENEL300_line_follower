@@ -13,8 +13,8 @@
 
 #include "system.h"
 
-#ifndef CLOCK_RATE
-	#define CLOCK_RATE_HZ 1000
+#ifndef CLOCK_RATE_HZ
+#define CLOCK_RATE_HZ 1000
 #endif
 
 #define CLOCK_TIMER1_SIZE 65535

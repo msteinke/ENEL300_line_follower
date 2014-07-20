@@ -8,109 +8,85 @@
  * check comparator.c
  */
 
-//portb LED bitmask
-#define PBLED 0x9C
-#define BAUD 51 //uart baud rate 9600
 
-#include <avr/io.h>
-#include <avr/interrupt.h> 
+#include "config.h"
+
+//Parameters
+#ifdef ENABLE_UART
+#define UART_ENABLED 1
+#else
+#define UART_ENABLED 0
+#endif
+#define UART_PERIOD (CLOCK_RATE_HZ/UART_RATE)
+#define SAMPLE_PERIOD (CLOCK_RATE_HZ/SAMPLE_RATE)
+
+
+//System Includes
 #include "system.h"
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#include <stdio.h>
+#include <util/delay.h>
+//Peripheral Includes
 #include "motor.h"
-#include "comparator.h"
+#include "led.h"
 #include "clock.h"
-//#include "sensor.h"
 #include "uart.h"
 #include "adc.h"
+#include "circBuf.h"
 
 
-
-void led_set_one(char led, char state)
-{
-
-	{
-		PORTB &= ~BIT(led);
-		PORTB |= (state<<led);
-	}
-}
-
-void led_set(char p)
-{
-	PORTB &= ~PBLED; //KILL LEDS
-	// set relevent bits
-	PORTB |= ((p << 4)&BIT(7))|	//shift 4th bit to 7th
-		((p<<2)&(BIT(2)|
-		BIT(3)|
-		BIT(4)));		//& 0-2 -> 2->4
-		
-		//PB2, PB3, PB4, PB7
-}
-
-void led_init(void)
-{
-	DDRB |= PBLED;
-}
 
 int main(void)
 {
-	
-	
 	system_init();
-	//motor_init();
 	clock_init();
-	sensor_init();
-	//UART_Init(BAUD);
-	led_init();
+	led_init();	led_set(0x01); //show life
+	UART_Init(BAUD); UART_Write("Init"); //Show UART life
+	motor_init();
 	adc_init();
 	
-	adc_enable(AIN1_MUX);
-	
+	//Disable output on analog pins 
+	DDRD &= ~(BIT(4)|BIT(2)); DDRC &= ~BIT(2);
+	//Enable Analog pins
+	adc_enable(AIN1); adc_enable(AIN2);	adc_enable(AIN3);
+	//Initialize signal conditioning arrays
+	circBuf_t aLeft; circBuf_t aRight; circBuf_t aFront;
+		
+	//Initialise UART output buffer
+	char buffer[UART_BUFF_SIZE] = {0};
 
-	
-	//UART_Write("Initialising...");
-	
-    //cli(); /*// disable all interrupts
-	sei(); /**/// Enable all interrupts
-	clock_enable_interrupt();
-	
-	led_set(0x01); //show everyone I'm alive.
-	
-	//comparator_test(AIN2_MUX);
-	
-	//DDRD = 0xFF; //Necissary?
-	
-	//UART_Write("Complete\n");
+	//Initialize scheduler variables
+	uint32_t t = 0;	
+	uint32_t sample_t_last = 0;
+	uint32_t UART_t_last = 0;
 
 
-	volatile short i = 0;
-	DDRB |= (1<<PB3) | (1<<PB4);
 	clock_set_ms(0);
-
-
-	int t = 0;
-	int t_last = 0;
-	byte j = 0;
+	sei(); // Enable all interrupts
+	UART_Write("ialized\n");
 	
-	for (int i = 0; i < 16000; i++)
-	{
-		continue;
-	}
 	while(1)
 	{
-		unsigned long start = adc_measure(AIN1_MUX);
-
+ 		t = clock_get_ms();
+		
+ 		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
 		{
+			//TODO: unblock function if necissary. 
+ 			adc_measure(AIN1);
+			_delay_us(100);
+			adc_measure(AIN2);
+			_delay_us(100);
+			adc_measure(AIN3);
+			sample_t_last = t;
 		}
-		t = clock_get_ms();
-		if( (t % 500) == 0 & t!=t_last)
+		
+		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
 		{
-			PORTB ^= (1<<3);
-			t_last = t;
-			if( adc_measure(AIN1_MUX) >= start)
-				PORTB |= (1<<7);
-			else
-				PORTB &= ~(1<<7);
-
+			sprintf(buffer, "\n C1: CHECKME, C2: NOTHING, C3 HERE");
+			UART_Write(buffer);
 		}
+
 		
 	}
 }

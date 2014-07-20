@@ -3,7 +3,7 @@
 
 #include "system.h"
 
-#define PC6_PIO PIO_DEFINE(PORT_C, 6)
+
 
 
 //
@@ -19,6 +19,6 @@ void adc_disable(uint8_t adc_channel);
 
 
 //
-uint8_t adc_measure(uint8_t adc_channel);
+uint16_t adc_measure(uint8_t adc_channel);
 
 #endif
