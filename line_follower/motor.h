@@ -22,7 +22,7 @@
 void motor_init(void);
 
 
-/** Control each motor from -127 to +128.
+/** Control each motor from -255 to +255.
 	@param left_speed
 	@param right_speed */
 void motor_set(short left_speed, short right_speed);

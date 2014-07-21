@@ -35,6 +35,12 @@ void system_init (void)
 {
     system_clock_init ();
     system_watchdog_timer_init ();
+	
+	//Setup port pins
+	DDRC &= ~BIT(1);
+	PORTC |= BIT(1);
+	DDRD &= ~BIT(7);
+	PORTD |= BIT(7);
 }
 
 

@@ -40,22 +40,17 @@
 int main(void)
 {
 	
-	DDRC &= ~BIT(1);
-	PORTB |= BIT(1);
-	DDRB &= ~BIT(7);
-	PORTB |= BIT(7);
+
 	
 	system_init();
 	clock_init();
 	led_init();	led_set(0x01); //show life
-	
-	/*
 	UART_Init(BAUD); UART_Write("Init"); //Show UART life
 	//motor_init();
 	adc_init();
 	
 	//Disable output on analog pins 
-	DDRD &= ~(BIT(4)|BIT(2)); DDRC &= ~BIT(2);
+	DDRD &= ~(BIT(4)|BIT(2)); DDRC &= ~BIT(2);  // TODO: MOVE TO ADC_INIT()
 	//Enable Analog pins
 	adc_enable(AIN1); adc_enable(AIN2);	adc_enable(AIN3);
 	//Initialize signal conditioning arrays
@@ -78,44 +73,42 @@ int main(void)
 	sei(); // Enable all interrupts
 	UART_Write("ialized\n");
 	
-	
-	
-// 	DDRB |= BIT(1)|BIT(7)|BIT(6);
-// 	PORTB |= BIT(1)|BIT(7);
-// 	PORTB &= ~BIT(6);
-// 	
-// 	DDRB |= BIT(5);
-// 	DDRD |= BIT(0);
-// 	DDRC |= BIT(7);
-// 	PORTB &= ~BIT(5);
-// 	PORTD |= BIT(0);
-// 	PORTC |= BIT(7);
-// 	
-	
-// 	motor_set_one(MOTOR_LEFT, 255, 1);
-// 	motor_set_one(MOTOR_RIGHT, 255, 1);
-	*/
+
+	short i = 0;
 	while(1)
-	{
-		/*
- 		t = clock_get_ms();
+	{                                                                                                                         
 		
- 		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
-		{
-			//TODO: unblock function if necessary. 
- 			a_in1 = adc_measure(AIN1);
-			_delay_us(100);
-			a_in2 = adc_measure(AIN2);
-			_delay_us(100);
-			a_in3 = adc_measure(AIN3);
-			sample_t_last = t;
-		}
-		
-		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
-		{
-			sprintf(buffer, "\n %u, %u, %u", a_in1, a_in2, a_in3);
-			UART_Write(buffer);
-		}*/
+// 		motor_set(i, i);
+// 		_delay_ms(1);
+// 		i++;
+// 		if (i > 255)
+// 			i = 0;
+
+		/*MOTOR_TEST*/
+// 		PORTB |= BIT(1)|BIT(7);
+// 		PORTB &= ~BIT(6);
+// 		
+// 		PORTD |= BIT(0);
+// 		PORTB |= BIT(5);
+// 		PORTC &= BIT(7);
+		//  		t = clock_get_ms();
+// 		
+//  		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
+// 		{
+// 			//TODO: unblock function if necessary. 
+//  			a_in1 = adc_measure(AIN1);
+// 			_delay_us(100);
+// 			a_in2 = adc_measure(AIN2);
+// 			_delay_us(100);
+// 			a_in3 = adc_measure(AIN3);
+// 			sample_t_last = t;
+// 		}
+// 		
+// 		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
+// 		{
+// 			sprintf(buffer, "\n %u, %u, %u", a_in1, a_in2, a_in3);
+// 			UART_Write(buffer);
+// 		}
 		
 	}
 }

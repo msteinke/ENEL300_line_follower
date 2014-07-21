@@ -110,13 +110,25 @@ void motor_init_timer0(void)
 	@param none
 	@return none */
 void motor_init(void)
-{
-	pio_config_set (MOTOR_PIN_L_FWD, PIO_OUTPUT_LOW);
-	pio_config_set (MOTOR_PIN_L_RVSE, PIO_OUTPUT_LOW);
-	pio_config_set (MOTOR_PIN_R_FWD, PIO_OUTPUT_LOW);
-	pio_config_set (MOTOR_PIN_R_RVSE, PIO_OUTPUT_LOW);
+{	
+	//configure motor pins
+	
+	//Motor A
+	DDRB |= BIT(1); //Direction
+	DDRB |= BIT(6); //Direction
+	DDRB |= BIT(7); //PWM
+	
+	DDRB |= BIT(5); //Direction
+	DDRC |= BIT(7);	//Direction
+	DDRD |= BIT(0); //PWM
 	
 	motor_init_timer0();
+	
+// 	pio_config_set (MOTOR_PIN_L_FWD, PIO_OUTPUT_LOW);
+// 	pio_config_set (MOTOR_PIN_L_RVSE, PIO_OUTPUT_LOW);
+// 	pio_config_set (MOTOR_PIN_R_FWD, PIO_OUTPUT_LOW);
+// 	pio_config_set (MOTOR_PIN_R_RVSE, PIO_OUTPUT_LOW);
+	
 	//motor_init_timer1();
 	
 }
