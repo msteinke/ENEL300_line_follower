@@ -8,47 +8,66 @@
 
 #include "motor.h"
 #include "system.h"
-//#include "pio.h"
 #include <avr/io.h>
 #include "pio.h"
+#include "config.h"
 
 #define MOTOR_INIT_DUTY_CYCLE 0
 
 
+#define MOTOR_PIN_R_FWD PIO_DEFINE(PORT_B, 1)
+#define MOTOR_PIN_R_RVSE PIO_DEFINE(PORT_B, 6)
+
+#define MOTOR_PIN_R_PWM PIO_DEFINE(PORT_B, 7)
+
+
+#define MOTOR_PIN_L_FWD PIO_DEFINE(PORT_C, 7)
+#define MOTOR_PIN_L_RVSE PIO_DEFINE(PORT_B, 5)
+
+#define MOTOR_PIN_L_PWM PIO_DEFINE(PORT_D, 0)
+
+
+
+
+/*
 // check that everything has been defined
 #ifndef MOTOR_PIN_L_FWD
-#error "MOTOR_PIN_L_FWD is undefined"
+#define MOTOR_PIN_L_FWD PIO_DEFINE(PORT_D, 4)
 #endif
 
 #ifndef MOTOR_PIN_L_RVSE
-#error "MOTOR_PIN_L_RVSE is undefined"
+#define MOTOR_PIN_L_RVSE PIO_DEFINE(PORT_D, 3)
 #endif
 
 #ifndef MOTOR_PIN_R_FWD
-#error "MOTOR_PIN_R_FWD is undefined"
+#define MOTOR_PIN_R_FWD PIO_DEFINE(PORT_D, 2)
 #endif
 
 #ifndef MOTOR_PIN_R_RVSE
-#error "MOTOR_PIN_R_RVSE is undefined"
+#define MOTOR_PIN_R_RVSE PIO_DEFINE(PORT_D, 1)
 #endif
 
+#ifndef MOTOR_PIN_L_PWM
+#define MOTOR_PIN_L_PWM PIO_DEFINE(PORT_B, 7)
+#endif
+
+#ifndef MOTOR_PIN_R_PWM
+#define MOTOR_PIN_R_PWM PIO_DEFINE(PORT_D, 0)
+#endif
+*/
 
 // figure out which PWM register goes
 // with which assigned pin. 
-#if MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_B, 7)
-    #define LEFT_DUTY OCR0A
-#elif MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_D, 0)
+#if MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_D, 0)
     #define LEFT_DUTY OCR0B
 #else 
-    #error "MOTOR_PIN_L_PWM is undefined"
+	#error "MOTOR_PIN_L_PWM is not on counter 0 pin"
 #endif
 
 #if MOTOR_PIN_R_PWM == PIO_DEFINE(PORT_B, 7)
     #define RIGHT_DUTY OCR0A
-#elif MOTOR_PIN_R_PWM == PIO_DEFINE(PORT_D, 0)
-    #define RIGHT_DUTY OCR0B
 #else
-    #error "MOTOR_PIN_R_PWM is undefined"
+#error "MOTOR_PIN_R_PWM is not on counter 0 pin"
 #endif
 
 

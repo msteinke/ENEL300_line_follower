@@ -39,11 +39,19 @@
 
 int main(void)
 {
+	
+	DDRC &= ~BIT(1);
+	PORTB |= BIT(1);
+	DDRB &= ~BIT(7);
+	PORTB |= BIT(7);
+	
 	system_init();
 	clock_init();
 	led_init();	led_set(0x01); //show life
+	
+	/*
 	UART_Init(BAUD); UART_Write("Init"); //Show UART life
-	motor_init();
+	//motor_init();
 	adc_init();
 	
 	//Disable output on analog pins 
@@ -52,6 +60,10 @@ int main(void)
 	adc_enable(AIN1); adc_enable(AIN2);	adc_enable(AIN3);
 	//Initialize signal conditioning arrays
 	circBuf_t aLeft; circBuf_t aRight; circBuf_t aFront;
+	
+	uint16_t a_in1 = 0;
+	uint16_t a_in2 = 0;
+	uint16_t a_in3 = 0;
 		
 	//Initialise UART output buffer
 	char buffer[UART_BUFF_SIZE] = {0};
@@ -66,27 +78,44 @@ int main(void)
 	sei(); // Enable all interrupts
 	UART_Write("ialized\n");
 	
+	
+	
+// 	DDRB |= BIT(1)|BIT(7)|BIT(6);
+// 	PORTB |= BIT(1)|BIT(7);
+// 	PORTB &= ~BIT(6);
+// 	
+// 	DDRB |= BIT(5);
+// 	DDRD |= BIT(0);
+// 	DDRC |= BIT(7);
+// 	PORTB &= ~BIT(5);
+// 	PORTD |= BIT(0);
+// 	PORTC |= BIT(7);
+// 	
+	
+// 	motor_set_one(MOTOR_LEFT, 255, 1);
+// 	motor_set_one(MOTOR_RIGHT, 255, 1);
+	*/
 	while(1)
 	{
+		/*
  		t = clock_get_ms();
 		
  		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
 		{
-			//TODO: unblock function if necissary. 
- 			adc_measure(AIN1);
+			//TODO: unblock function if necessary. 
+ 			a_in1 = adc_measure(AIN1);
 			_delay_us(100);
-			adc_measure(AIN2);
+			a_in2 = adc_measure(AIN2);
 			_delay_us(100);
-			adc_measure(AIN3);
+			a_in3 = adc_measure(AIN3);
 			sample_t_last = t;
 		}
 		
 		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
 		{
-			sprintf(buffer, "\n C1: CHECKME, C2: NOTHING, C3 HERE");
+			sprintf(buffer, "\n %u, %u, %u", a_in1, a_in2, a_in3);
 			UART_Write(buffer);
-		}
-
+		}*/
 		
 	}
 }

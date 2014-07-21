@@ -42,7 +42,7 @@
    current is 40 mA.
  
  */
-#define ADC_MAX 600
+#define ADC_MAX 254
 
 #ifndef PC6_PIO
 #define PC6_PIO PIO_DEFINE(PORT_D, 5)
@@ -91,6 +91,7 @@ void adc_init(void)
 	
 	//Set charge capacitor as an output
 	pio_config_set(ADC_CHARGE_PIO, PIO_OUTPUT_LOW);
+
 }
  
  
@@ -120,8 +121,9 @@ uint16_t adc_measure(uint8_t adc_channel)
 	//pio_config_set(ADC_MEA_PIO, PIO_INPUT);
 	DDRD &= ~BIT(1);
  
-    pio_output_high (ADC_CHARGE_PIO);
- 
+    //pio_output_high (ADC_CHARGE_PIO);
+	PORTD |= BIT(5);
+	
     while (! (ACSR & BIT(ACO)))
     {
 		count++;
@@ -133,6 +135,7 @@ uint16_t adc_measure(uint8_t adc_channel)
  
 	//Stop charging capacitor
     pio_output_low (ADC_CHARGE_PIO);
+	
 	
 	//Discharge capacitor through PD0
 	//pio_config_set(ADC_MEA_PIO, PIO_OUTPUT_LOW);

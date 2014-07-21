@@ -4,6 +4,10 @@
 //===========CONFIG=============
 //Configuration for system settings
 
+#ifndef F_CPU
+#define F_CPU 8000000
+#endif
+
 //ADC paramers
 #define SAMPLE_RATE 50
 
@@ -15,6 +19,15 @@
 #define UART_BUFF_SIZE 32
 #define BAUD 51 //uart baud rate 9600
 
-//==========END-CONFIG==========
+
+// Pin Allocations
+
+
+
+
+/* Pin allocation for two motors. Choose 
+   from PB7 and PD0 for PWM. Any GPIO pin for 
+   motor direction. */
+
 
 #endif
