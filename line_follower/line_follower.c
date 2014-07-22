@@ -55,13 +55,18 @@
 #include "adc.h"
 #include "circBuf.h"
 
+//GLOBALS
+
+//Sensor value variables
+short sensor_value_left = 0; short sensor_value_right = 0; short sensor_value_front = 0;
+
+//Analog inputSignal conditioning arrays
+circBuf_t aLeft; circBuf_t aRight; circBuf_t aFront;
+
 
 
 int main(void)
 {
-	
-
-	
 	system_init();
 	clock_init();
 	led_init();	led_set(0x01); //show life
@@ -73,8 +78,7 @@ int main(void)
 	adc_enable(AIN1); adc_enable(AIN2);	adc_enable(AIN3);
 	//Analog input variables
 	uint16_t a_in1 = 0;	uint16_t a_in2 = 0;	uint16_t a_in3 = 0;
-	//Analog inputSignal conditioning arrays
-	circBuf_t aLeft; circBuf_t aRight; circBuf_t aFront;			//TODO: initialise circbuffs
+																			//TODO: initialise circbuffs
 		
 	//UART output buffer
 	char buffer[UART_BUFF_SIZE] = {0};
@@ -91,6 +95,9 @@ int main(void)
 
 	//Scheduler variables
 	uint32_t t = 0;	
+
+	//Loop control time variables
+	uint32_t time_check_t_last = 0;
 	uint32_t sample_t_last = 0;
 	uint32_t UART_t_last = 0;
 
@@ -105,22 +112,30 @@ int main(void)
 	{                                                                                                                         
 		t = clock_get_ms();
 		
-		//Check if time threshold has been exceeded 
-		if ((t - t_last) > (del_t_last + SWEEP_TOLLERANCE)
+		//Check for sweep action taking excessive time
+		if ((current_action == SWEEP_LEFT | current_action == SWEEP_RIGHT) & (t != time_check_t_last))
 		{
-			del_l_last = t - t_last;
+			time_check_t_last = t;
+			if ((t - t_last) > (del_t_last + SWEEP_TOLLERANCE))
+			{
+				del_l_last = t - t_last;
+				current_action = IDLE;
 
-			//turn possible
-			if (currenct_action == SWEEP_LEFT)
-																	//TODO: update information on current position
-
+				//turn possible
+				if (currenct_action == SWEEP_LEFT)
+					current_position |= LEFT_POSSIBLE;
+				else if (current_action == SWEEP_RIGHT)
+					current_position |= RIGHT_POSSIBLE;
+			}
 		}
 
 		//check if sensor update has any relevant changes
-		if (sensors_updated == true)
+		if (sensors_update_serviced == false)
 		{
-			continue;
-																	//TODO: add flag modificatoin for changed state
+			sensors_update_serviced = true;
+
+			if
+			
 		}
 		
 		//Sensor update
@@ -128,7 +143,8 @@ int main(void)
 		{
 			sensor_update(&ain_1, &a_in2, &ain_3);
 			sample_t_last = t;
-			sensors_updated = true;
+			//modify sensor update flag to check for relevant changes
+			sensors_update_serviced = false;
 		}
 		
 		//display degug information
@@ -142,6 +158,10 @@ int main(void)
 	}
 }
 
+short sensor_left_value()
+{
+
+}
 
 void sensor_update(short* a_in1, short* a_in2, short* ain3)
 {
