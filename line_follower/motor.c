@@ -15,59 +15,39 @@
 #define MOTOR_INIT_DUTY_CYCLE 0
 
 
-#define MOTOR_PIN_R_FWD PIO_DEFINE(PORT_B, 1)
-#define MOTOR_PIN_R_RVSE PIO_DEFINE(PORT_B, 6)
-
-#define MOTOR_PIN_R_PWM PIO_DEFINE(PORT_B, 7)
-
-
-#define MOTOR_PIN_L_FWD PIO_DEFINE(PORT_C, 7)
-#define MOTOR_PIN_L_RVSE PIO_DEFINE(PORT_B, 5)
-
-#define MOTOR_PIN_L_PWM PIO_DEFINE(PORT_D, 0)
-
-
-
-
-/*
 // check that everything has been defined
 #ifndef MOTOR_PIN_L_FWD
-#define MOTOR_PIN_L_FWD PIO_DEFINE(PORT_D, 4)
+#error "MOTOR_PIN_L_FWD is undefined"
 #endif
 
 #ifndef MOTOR_PIN_L_RVSE
-#define MOTOR_PIN_L_RVSE PIO_DEFINE(PORT_D, 3)
+#error "MOTOR_PIN_L_RVSE is undefined"
 #endif
 
 #ifndef MOTOR_PIN_R_FWD
-#define MOTOR_PIN_R_FWD PIO_DEFINE(PORT_D, 2)
+#error "MOTOR_PIN_R_FWD is undefined"
 #endif
 
 #ifndef MOTOR_PIN_R_RVSE
-#define MOTOR_PIN_R_RVSE PIO_DEFINE(PORT_D, 1)
+#error "MOTOR_PIN_R_RVSE is undefined"
 #endif
-
-#ifndef MOTOR_PIN_L_PWM
-#define MOTOR_PIN_L_PWM PIO_DEFINE(PORT_B, 7)
-#endif
-
-#ifndef MOTOR_PIN_R_PWM
-#define MOTOR_PIN_R_PWM PIO_DEFINE(PORT_D, 0)
-#endif
-*/
 
 // figure out which PWM register goes
-// with which assigned pin. 
-#if MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_D, 0)
-    #define LEFT_DUTY OCR0B
-#else 
-	#error "MOTOR_PIN_L_PWM is not on counter 0 pin"
+// with which assigned pin.
+#if MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_B, 7)
+		#define LEFT_DUTY OCR0A
+#elif MOTOR_PIN_L_PWM == PIO_DEFINE(PORT_D, 0)
+	#define LEFT_DUTY OCR0B
+#else
+	#error "MOTOR_PIN_L_PWM is undefined"
 #endif
 
 #if MOTOR_PIN_R_PWM == PIO_DEFINE(PORT_B, 7)
-    #define RIGHT_DUTY OCR0A
+	#define RIGHT_DUTY OCR0A
+#elif MOTOR_PIN_R_PWM == PIO_DEFINE(PORT_D, 0)
+	#define RIGHT_DUTY OCR0B
 #else
-#error "MOTOR_PIN_R_PWM is not on counter 0 pin"
+	#error "MOTOR_PIN_R_PWM is undefined"
 #endif
 
 
@@ -110,25 +90,13 @@ void motor_init_timer0(void)
 	@param none
 	@return none */
 void motor_init(void)
-{	
-	//configure motor pins
-	
-	//Motor A
-	DDRB |= BIT(1); //Direction
-	DDRB |= BIT(6); //Direction
-	DDRB |= BIT(7); //PWM
-	
-	DDRB |= BIT(5); //Direction
-	DDRC |= BIT(7);	//Direction
-	DDRD |= BIT(0); //PWM
+{
+	pio_config_set (MOTOR_PIN_L_FWD, PIO_OUTPUT_LOW);
+	pio_config_set (MOTOR_PIN_L_RVSE, PIO_OUTPUT_LOW);
+	pio_config_set (MOTOR_PIN_R_FWD, PIO_OUTPUT_LOW);
+	pio_config_set (MOTOR_PIN_R_RVSE, PIO_OUTPUT_LOW);
 	
 	motor_init_timer0();
-	
-// 	pio_config_set (MOTOR_PIN_L_FWD, PIO_OUTPUT_LOW);
-// 	pio_config_set (MOTOR_PIN_L_RVSE, PIO_OUTPUT_LOW);
-// 	pio_config_set (MOTOR_PIN_R_FWD, PIO_OUTPUT_LOW);
-// 	pio_config_set (MOTOR_PIN_R_RVSE, PIO_OUTPUT_LOW);
-	
 	//motor_init_timer1();
 	
 }
@@ -233,7 +201,7 @@ void motor_test(void)
 		short x = 59;
 		short y = 1;
 		
-		DDRB |= (1<<PB6);
+		DDRB |= (1<<PB2);
 		
 		while(1)
 		{
@@ -269,7 +237,7 @@ void motor_test(void)
 			j += k;
 			x += y;
 			
-			PORTB ^= (1<<PB6);
+			PORTB ^= (1<<PB2);
 		}
 }
 

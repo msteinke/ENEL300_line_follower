@@ -7,11 +7,14 @@
  * Comparator does funny stuff with portb, for PorbD io, 
  * check comparator.c
  */
-
+#define ROLLING_AVERAGE_LENGTH 5
 
 #include "config.h"
 
- #define SWEEP_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
+#define TRUE 1
+#define FALSE 0
+
+#define SWEEP_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
 
 //Parameters
 #ifdef ENABLE_UART
@@ -30,16 +33,17 @@
 	Bit two indicates left possible
 	Bit three indicates right possible
 */
+/*
  typedef enum{
- 	STRAIGHt_POSSBLE BIT(0),
- 	STRAIGHT_NOT_POSSIBLE ~Bit(0),
+ 	STRAIGHT_POSSBLE = BIT(0),
+ 	STRAIGHT_NOT_POSSIBLE = ~Bit(0),
  	LEFT_POSSIBLE BIT(1),
  	LEFT_NOT_POSSLBE ~BIT(1),
  	RIGHT_POSSIBLE BIT(2),
  	RIGHT_NOT_POSSIBLE ~BIT(2),
  	UNKNOWN BIT(7)
  } position;
-
+*/
 
 //System Includes
 #include "system.h"
@@ -55,13 +59,16 @@
 #include "adc.h"
 #include "circBuf.h"
 
-//GLOBALS
+ #define CHANNEL_SENSOR_LEFT AIN1
+ #define CHANNEL_SENSOR_RIGHT AIN2
+ #define CHANNEL_SENSOR_FRONT AIN3
 
-//Sensor value variables
-short sensor_value_left = 0; short sensor_value_right = 0; short sensor_value_front = 0;
+//PROTOTYPES
+void sweep_left(int16_t speed);
+void sweep_right(int16_t speed);
 
-//Analog inputSignal conditioning arrays
-circBuf_t aLeft; circBuf_t aRight; circBuf_t aFront;
+void sensor_update(uint8_t channel, circBuf_t* readings, uint16_t* sensor_value);
+
 
 
 
@@ -70,15 +77,26 @@ int main(void)
 	system_init();
 	clock_init();
 	led_init();	led_set(0x01); //show life
-	UART_Init(BAUD); UART_Write("Init"); //Show UART life
+	UART_Init(BAUD); UART_Write("\nInit"); //Show UART life
 	motor_init();
 	adc_init();
 	
 	//Enable Analog pins
-	adc_enable(AIN1); adc_enable(AIN2);	adc_enable(AIN3);
-	//Analog input variables
-	uint16_t a_in1 = 0;	uint16_t a_in2 = 0;	uint16_t a_in3 = 0;
-																			//TODO: initialise circbuffs
+	adc_enable(CHANNEL_SENSOR_LEFT); 
+    adc_enable(CHANNEL_SENSOR_RIGHT);	
+    adc_enable(CHANNEL_SENSOR_FRONT);
+	
+	//Sensor value variables
+	uint16_t sensor_left_value = 0; uint16_t sensor_right_value  = 0; uint16_t sensor_front_value  = 0;
+
+	//Analog inputSignal conditioning arrays
+	circBuf_t left_buffer; circBuf_t right_buffer; 	circBuf_t front_buffer;
+
+    //Initialise sensor averaging buffers
+	initCircBuf(&left_buffer, ROLLING_AVERAGE_LENGTH);
+	initCircBuf(&right_buffer, ROLLING_AVERAGE_LENGTH);
+	initCircBuf(&front_buffer, ROLLING_AVERAGE_LENGTH);
+
 		
 	//UART output buffer
 	char buffer[UART_BUFF_SIZE] = {0};
@@ -87,10 +105,11 @@ int main(void)
 	circBuf_t sweep_times;
 	short del_t_last();
 
-	bool sensors_updated = false;
+	bool sensor_update_serviced = FALSE;
+	
 	
 	action current_action = IDLE;
-	position current_position = UNKNOWN;
+	//position current_position = UNKNOWN;
 
 
 	//Scheduler variables
@@ -105,14 +124,18 @@ int main(void)
 	clock_set_ms(0);
 	sei(); // Enable all interrupts
 	UART_Write("ialized\n");
-	
 
-	short i = 0;
+
+    //set initial state
+	current_action = SWEEP_LEFT;
+	sweep_left(DEFAULT_SPEED);	
 	while(1)
-	{                                                                                                                         
+	{
+		                                                                                                                         
 		t = clock_get_ms();
 		
 		//Check for sweep action taking excessive time
+/*
 		if ((current_action == SWEEP_LEFT | current_action == SWEEP_RIGHT) & (t != time_check_t_last))
 		{
 			time_check_t_last = t;
@@ -128,47 +151,83 @@ int main(void)
 					current_position |= RIGHT_POSSIBLE;
 			}
 		}
-
+*/
 		//check if sensor update has any relevant changes
-		if (sensors_update_serviced == false)
-		{
-			sensors_update_serviced = true;
 
-			if
-			
+		if (sensor_update_serviced == FALSE)
+		{
+            if (sensor_left_value  < BLACK_THRESHOLD)
+            {
+				if(current_action == SWEEP_LEFT)
+                {
+	                current_action = SWEEP_RIGHT;
+	                sweep_right(DEFAULT_SPEED);
+                }
+            }
+            if (sensor_left_value  > BLACK_THRESHOLD)
+			{
+				if (current_action == SWEEP_RIGHT)
+				{
+					current_action = SWEEP_LEFT;
+					sweep_left(DEFAULT_SPEED);
+				}
+			}				
+				
+            if (sensor_front_value  < BLACK_THRESHOLD)
+
+
+			sensor_update_serviced = TRUE;			
 		}
 		
-		//Sensor update
+		//Sensor value update
  		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
 		{
-			sensor_update(&ain_1, &a_in2, &ain_3);
-			sample_t_last = t;
-			//modify sensor update flag to check for relevant changes
-			sensors_update_serviced = false;
+            sample_t_last = t;
+
+            //read in analog values
+            sensor_update(CHANNEL_SENSOR_LEFT, &left_buffer, &sensor_left_value );
+            sensor_update(CHANNEL_SENSOR_RIGHT, &right_buffer, &sensor_right_value );
+            sensor_update(CHANNEL_SENSOR_FRONT, &front_buffer, &sensor_front_value );
+			sensor_update_serviced = FALSE;
+
 		}
 		
 		//display degug information
 		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
 		{
-
-			sprintf(buffer, "\r %u", t);
+			if (current_action == SWEEP_LEFT)
+				UART_Write("sweep left: ");
+			if (current_action == SWEEP_RIGHT)
+				UART_Write("sweep right: ");
+			sprintf(buffer, "%u, %u, %u \n", sensor_left_value , sensor_right_value , sensor_front_value );
 			UART_Write(buffer);
  		}
 		
 	}
 }
 
-short sensor_left_value()
-{
 
+void sweep_left(int16_t speed)
+{  
+    motor_set(speed*FF/100, speed);
 }
 
-void sensor_update(short* a_in1, short* a_in2, short* ain3)
+void sweep_right(int16_t speed)
 {
-	a_in1* = adc_measure(AIN1);
-	_delay_us(20);
-	a_in2* = adc_measure(AIN2);
-	_delay_us(20);
-	a_in3* = adc_measure(AIN3);
+    motor_set(speed, speed*FF/100);
+}
+
+
+void sensor_update(uint8_t channel, circBuf_t* readings, uint16_t* sensor_value)
+{
+    //Read in analog values
+	uint16_t new_value = adc_measure(channel);
+    //Read value to be replaced from circular buffer
+    short val_replaced = readings->data[readings->windex];
+    //Remove value to be replaced from current average
+    *sensor_value -= val_replaced/ROLLING_AVERAGE_LENGTH;
+    //add new value to average and replace old value in buffer
+    *sensor_value += new_value/ROLLING_AVERAGE_LENGTH;
+    writeCircBuf(readings, new_value);
 }
 //65535
