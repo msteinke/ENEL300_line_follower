@@ -11,6 +11,8 @@
 
 #include "config.h"
 
+ #define SWEEP_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
+
 //Parameters
 #ifdef ENABLE_UART
 #define UART_ENABLED 1
@@ -19,6 +21,24 @@
 #endif
 #define UART_PERIOD (CLOCK_RATE_HZ/UART_RATE)
 #define SAMPLE_PERIOD (CLOCK_RATE_HZ/SAMPLE_RATE)
+
+ //Application specific enums
+ typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT} action;
+
+/*bitfield variable
+* 	Bit one indicates posibility of forward travel (1 = possible)
+	Bit two indicates left possible
+	Bit three indicates right possible
+*/
+ typedef enum{
+ 	STRAIGHt_POSSBLE BIT(0),
+ 	STRAIGHT_NOT_POSSIBLE ~Bit(0),
+ 	LEFT_POSSIBLE BIT(1),
+ 	LEFT_NOT_POSSLBE ~BIT(1),
+ 	RIGHT_POSSIBLE BIT(2),
+ 	RIGHT_NOT_POSSIBLE ~BIT(2),
+ 	UNKNOWN BIT(7)
+ } position;
 
 
 //System Includes
@@ -46,24 +66,30 @@ int main(void)
 	clock_init();
 	led_init();	led_set(0x01); //show life
 	UART_Init(BAUD); UART_Write("Init"); //Show UART life
-	//motor_init();
+	motor_init();
 	adc_init();
 	
-	//Disable output on analog pins 
-	DDRD &= ~(BIT(4)|BIT(2)); DDRC &= ~BIT(2);  // TODO: MOVE TO ADC_INIT()
 	//Enable Analog pins
 	adc_enable(AIN1); adc_enable(AIN2);	adc_enable(AIN3);
-	//Initialize signal conditioning arrays
-	circBuf_t aLeft; circBuf_t aRight; circBuf_t aFront;
-	
-	uint16_t a_in1 = 0;
-	uint16_t a_in2 = 0;
-	uint16_t a_in3 = 0;
+	//Analog input variables
+	uint16_t a_in1 = 0;	uint16_t a_in2 = 0;	uint16_t a_in3 = 0;
+	//Analog inputSignal conditioning arrays
+	circBuf_t aLeft; circBuf_t aRight; circBuf_t aFront;			//TODO: initialise circbuffs
 		
-	//Initialise UART output buffer
+	//UART output buffer
 	char buffer[UART_BUFF_SIZE] = {0};
 
-	//Initialize scheduler variables
+	//=====Application specific variables=====								//TODO: initialise circbuff
+	circBuf_t sweep_times;
+	short del_t_last();
+
+	bool sensors_updated = false;
+	
+	action current_action = IDLE;
+	position current_position = UNKNOWN;
+
+
+	//Scheduler variables
 	uint32_t t = 0;	
 	uint32_t sample_t_last = 0;
 	uint32_t UART_t_last = 0;
@@ -77,39 +103,52 @@ int main(void)
 	short i = 0;
 	while(1)
 	{                                                                                                                         
+		t = clock_get_ms();
 		
-// 		motor_set(i, i);
-// 		_delay_ms(1);
-// 		i++;
-// 		if (i > 255)
-// 			i = 0;
+		//Check if time threshold has been exceeded 
+		if ((t - t_last) > (del_t_last + SWEEP_TOLLERANCE)
+		{
+			del_l_last = t - t_last;
 
-		/*MOTOR_TEST*/
-// 		PORTB |= BIT(1)|BIT(7);
-// 		PORTB &= ~BIT(6);
-// 		
-// 		PORTD |= BIT(0);
-// 		PORTB |= BIT(5);
-// 		PORTC &= BIT(7);
-		//  		t = clock_get_ms();
-// 		
-//  		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
-// 		{
-// 			//TODO: unblock function if necessary. 
-//  			a_in1 = adc_measure(AIN1);
-// 			_delay_us(100);
-// 			a_in2 = adc_measure(AIN2);
-// 			_delay_us(100);
-// 			a_in3 = adc_measure(AIN3);
-// 			sample_t_last = t;
-// 		}
-// 		
-// 		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
-// 		{
-// 			sprintf(buffer, "\n %u, %u, %u", a_in1, a_in2, a_in3);
-// 			UART_Write(buffer);
-// 		}
+			//turn possible
+			if (currenct_action == SWEEP_LEFT)
+																	//TODO: update information on current position
+
+		}
+
+		//check if sensor update has any relevant changes
+		if (sensors_updated == true)
+		{
+			continue;
+																	//TODO: add flag modificatoin for changed state
+		}
+		
+		//Sensor update
+ 		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
+		{
+			sensor_update(&ain_1, &a_in2, &ain_3);
+			sample_t_last = t;
+			sensors_updated = true;
+		}
+		
+		//display degug information
+		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
+		{
+
+			sprintf(buffer, "\r %u", t);
+			UART_Write(buffer);
+ 		}
 		
 	}
+}
+
+
+void sensor_update(short* a_in1, short* a_in2, short* ain3)
+{
+	a_in1* = adc_measure(AIN1);
+	_delay_us(20);
+	a_in2* = adc_measure(AIN2);
+	_delay_us(20);
+	a_in3* = adc_measure(AIN3);
 }
 //65535

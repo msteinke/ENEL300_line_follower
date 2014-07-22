@@ -86,6 +86,10 @@ void adc_init(void)
     /* By default the analog comparator is enabled but let's enable it.  */
     ACSR &= BIT(7);
 	
+	 //Set ADC muxed input pins as inputs
+	 DDRD &= ~(BIT(4)|BIT(2));
+	 DDRC &= ~BIT(2);
+	
 	//Set disable output on ADC measurment pin
 	pio_config_set(ADC_MEA_PIO, PIO_INPUT);
 	
