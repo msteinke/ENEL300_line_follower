@@ -17,9 +17,17 @@
 #define ROLLING_AVERAGE_LENGTH 5
 #endif
 
+#ifndef SWEEP_TIME_MEMORY_LENGTH 
+#define SWEEP_TIME_MEMORY_LENGTH 5
+#endif
+
 #define DEFAULT_SPEED 255
 #define FF 25//forwardization factor %
 
+
+typedef enum{BLACK, GREY, WHITE} level;
+typedef enum{NC, FALLEN, RISEN} level_action;
+	
 #define GREY_THRESHOLD 50
 #define BLACK_THRESHOLD 240
 
@@ -29,7 +37,7 @@
 
 #define ENABLE_UART
 #define UART_RATE 4 //update frequency
-#define UART_BUFF_SIZE 32
+#define UART_BUFF_SIZE 200
 #define BAUD 51 //uart baud rate 9600
 
 #endif

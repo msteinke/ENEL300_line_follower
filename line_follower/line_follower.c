@@ -28,6 +28,7 @@
  //Application specific enums
  typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT} action;
 
+
 /*bitfield variable
 * 	Bit one indicates posibility of forward travel (1 = possible)
 	Bit two indicates left possible
@@ -63,7 +64,12 @@
  #define CHANNEL_SENSOR_RIGHT AIN2
  #define CHANNEL_SENSOR_FRONT AIN3
 
+
+
 //PROTOTYPES
+level level_get(uint16_t value);
+level_action action_get(level current, level last);
+
 void sweep_left(int16_t speed);
 void sweep_right(int16_t speed);
 
@@ -85,6 +91,15 @@ int main(void)
 	adc_enable(CHANNEL_SENSOR_LEFT); 
     adc_enable(CHANNEL_SENSOR_RIGHT);	
     adc_enable(CHANNEL_SENSOR_FRONT);
+
+    //Sensor state variables
+    level left; level right; level front; 
+	//senor previous state variables for edge detection
+	level left_last; level right_last; level front_last;
+	// sensor action variables
+	level_action left_action = NC; 
+	level_action right_action = NC; 
+	level_action front_action = NC;
 	
 	//Sensor value variables
 	uint16_t sensor_left_value = 0; uint16_t sensor_right_value  = 0; uint16_t sensor_front_value  = 0;
@@ -103,9 +118,15 @@ int main(void)
 
 	//=====Application specific variables=====								//TODO: initialise circbuff
 	circBuf_t sweep_times;
-	short del_t_last();
+	initCircBuf(&sweep_times, SWEEP_TIME_MEMORY_LENGTH);
+	short sweep_del_t_last = 0;
+	short sweep_end_t_last = 0;
+
+	bool sweep_ended = FALSE;
 
 	bool sensor_update_serviced = FALSE;
+	
+	bool buffer_updated = FALSE;
 	
 	
 	action current_action = IDLE;
@@ -134,9 +155,8 @@ int main(void)
 		                                                                                                                         
 		t = clock_get_ms();
 		
-		//Check for sweep action taking excessive time
-/*
-		if ((current_action == SWEEP_LEFT | current_action == SWEEP_RIGHT) & (t != time_check_t_last))
+		//Check for sweep action taking an unexpected amount of time. but dont check the very first sweep. 
+/*		if ((current_action == SWEEP_LEFT | current_action == SWEEP_RIGHT) & (t != time_check_t_last) & (t > 1000))
 		{
 			time_check_t_last = t;
 			if ((t - t_last) > (del_t_last + SWEEP_TOLLERANCE))
@@ -156,24 +176,50 @@ int main(void)
 
 		if (sensor_update_serviced == FALSE)
 		{
+			left_last = left;
+			right_last = right;
+			front_last = front;
+			
+			left = level_get(sensor_left_value);
+			right = level_get(sensor_right_value);
+			front = level_get(sensor_right_value);
+			//Check for changes in levels
+
+
+
+			//check for end of left sweep 									todo: modify to act on falling edge of left sensor
             if (sensor_left_value  < BLACK_THRESHOLD)
             {
 				if(current_action == SWEEP_LEFT)
                 {
-	                current_action = SWEEP_RIGHT;
+	                current_action = SWEEP_RIGHT; 
 	                sweep_right(DEFAULT_SPEED);
+	                sweep_ended = TRUE;
+
                 }
             }
-            if (sensor_left_value  > BLACK_THRESHOLD)
+            //check for end of right sweep
+            if (sensor_right_value  < BLACK_THRESHOLD)						//todo: same as ^
 			{
 				if (current_action == SWEEP_RIGHT)
 				{
 					current_action = SWEEP_LEFT;
 					sweep_left(DEFAULT_SPEED);
+					sweep_ended = TRUE;
 				}
-			}				
-				
+			}			
+			//check for 
             if (sensor_front_value  < BLACK_THRESHOLD)
+
+            //If a new sweep started this cycle, find how long it took
+            if (sweep_ended)
+            {
+				sweep_ended = FALSE;
+				sweep_del_t_last = t - sweep_end_t_last; 
+				sweep_end_t_last = t;
+				sprintf(buffer, "sweep took: %u \n", sweep_del_t_last); buffer_updated = TRUE;
+				writeCircBuf(&sweep_times, sweep_del_t_last);
+			}
 
 
 			sensor_update_serviced = TRUE;			
@@ -193,18 +239,46 @@ int main(void)
 		}
 		
 		//display degug information
-		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
-		{
+		//if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
+		//{
+			/*
 			if (current_action == SWEEP_LEFT)
 				UART_Write("sweep left: ");
 			if (current_action == SWEEP_RIGHT)
 				UART_Write("sweep right: ");
-			sprintf(buffer, "%u, %u, %u \n", sensor_left_value , sensor_right_value , sensor_front_value );
+				*/
+			//sprintf(buffer, "%u, %u, %u, %u \n", sensor_left_value , sensor_right_value , sensor_front_value, sweep_del_t_last);
+		if (buffer_updated)
+		{
 			UART_Write(buffer);
- 		}
+			buffer_updated = FALSE;
+		}
+ 		//}
+		 
 		
 	}
 }
+
+level level_get(uint16_t value)
+{
+	if (value < GREY_THRESHOLD)
+		return WHITE;
+	else if (value < BLACK_THRESHOLD)
+		return GREY;
+	else
+		return BLACK;
+}
+
+level_action action_get(level current, level last)
+{
+	if(current < last)
+		return FALLEN;
+	else if(current > last)
+		return RISEN;
+	else
+		return NC;
+}
+
 
 
 void sweep_left(int16_t speed)
