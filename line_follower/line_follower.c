@@ -176,32 +176,34 @@ int main(void)
 
 		if (sensor_update_serviced == FALSE)
 		{
-			left_last = left;
-			right_last = right;
-			front_last = front;
 			
-			left = level_get(sensor_left_value);
-			right = level_get(sensor_right_value);
-			front = level_get(sensor_right_value);
-			//Check for changes in levels
+			// left_last = left;
+			// right_last = right;
+			// front_last = front;
+			
+			// left = level_get(sensor_left_value);
+			// right = level_get(sensor_right_value);
+			// front = level_get(sensor_right_value);
+			// //Check for changes in levels
+			
 
 
 
-			//check for end of left sweep 									todo: modify to act on falling edge of left sensor
-            if (sensor_left_value  < BLACK_THRESHOLD)
+			//check for end of left sweep 									todo: modify to use PID based on differential
+            if ((current_action == SWEEP_LEFT) & 
+            	(sensor_left_value < sensor_right_value - SENSOR_TOLLERANCE)
             {
-				if(current_action == SWEEP_LEFT)
-                {
-	                current_action = SWEEP_RIGHT; 
-	                sweep_right(DEFAULT_SPEED);
+            		sweep_right(DEFAULT_SPEED);
 	                sweep_ended = TRUE;
+	                current_action = SWEEP_RIGHT; 
 
-                }
+
             }
             //check for end of right sweep
-            if (sensor_right_value  < BLACK_THRESHOLD)						//todo: same as ^
+            if ((current_action == SWEEP_RIGHT)						//todo: same as ^
 			{
-				if (current_action == SWEEP_RIGHT)
+				if ((current_action == SWEEP_RIGHT) &
+					sensor_right_value < sensor_left_value - SENSOR_TOLLERANCE)
 				{
 					current_action = SWEEP_LEFT;
 					sweep_left(DEFAULT_SPEED);
