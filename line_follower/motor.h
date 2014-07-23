@@ -46,5 +46,7 @@ void motor_test(void);
 	@param direction */
 void motor_set_one(byte motor, byte duty, byte direction);
 
+void motor_testb(void);
+
 
 #endif /* MOTOR_H_ */

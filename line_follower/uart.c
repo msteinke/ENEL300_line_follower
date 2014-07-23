@@ -38,7 +38,7 @@ void UART_Transmit( unsigned char data )
 //Writes a buffer to serial.
 void UART_Write(char string[UART_BUFF_SIZE])
 {
-	for (int i = 0; i < 32; i++)
+	for (int i = 0; i < UART_BUFF_SIZE; i++)
 	{
 		if(string[i] == 0)
 			break;

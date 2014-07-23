@@ -10,26 +10,30 @@
 
 //ADC paramers
 #ifndef SAMPLE_RATE
-#define SAMPLE_RATE 200
+#define SAMPLE_RATE 50
 #endif
 
 #ifndef ROLLING_AVERAGE_LENGTH
-#define ROLLING_AVERAGE_LENGTH 5
+#define ROLLING_AVERAGE_LENGTH 10
 #endif
 
 #ifndef SWEEP_TIME_MEMORY_LENGTH 
 #define SWEEP_TIME_MEMORY_LENGTH 5
 #endif
 
-#define DEFAULT_SPEED 255
-#define FF 25//forwardization factor %
+#define DEFAULT_SPEED 80
+#define FF 0 //forwardization factor %
 
+#define SENSOR_TOLLERANCE 20
 
 typedef enum{BLACK, GREY, WHITE} level;
 typedef enum{NC, FALLEN, RISEN} level_action;
 	
 #define GREY_THRESHOLD 50
 #define BLACK_THRESHOLD 240
+
+
+#define SWEEP_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
 
 //UART settings for debugging
 #ifndef UART_PARAMS

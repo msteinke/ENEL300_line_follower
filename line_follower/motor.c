@@ -242,6 +242,28 @@ void motor_test(void)
 }
 
 
+/** Simple test program that pulses the PWM
+    channels so that it is obvious if it works.
+	An LED is on PB6 for debugging.
+	@param none
+	@return none */
+void motor_testb(void)
+{
+	pio_config_set (MOTOR_PIN_R_PWM, PIO_OUTPUT_LOW);
+	pio_config_set (MOTOR_PIN_L_PWM, PIO_OUTPUT_LOW);
+	
+	pio_output_high(MOTOR_PIN_R_FWD);
+	pio_output_low(MOTOR_PIN_R_RVSE);
+	pio_output_high(MOTOR_PIN_L_PWM);
+	
+	pio_output_high(MOTOR_PIN_L_FWD);
+	pio_output_low(MOTOR_PIN_L_RVSE);
+	pio_output_high(MOTOR_PIN_L_PWM);
+	while(1)
+	{
+		continue;
+	}
+}
 
 
 /*
