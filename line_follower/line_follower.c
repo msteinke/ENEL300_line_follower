@@ -101,6 +101,9 @@ int main(void)
 
 
 //PROTOTYPES
+int16_t integrate(int16_t* integrator, uint16_t current_value, uint16_t last_value, int16_t delta_t);
+int16_t derivative(uint16_t current_value, uint16_t last_value, uint16_t delta_t);
+int16_t regulate(int16_t value, uint16_t limit);
 level level_get(uint16_t value);
 level_action action_get(level current, level last);
 
@@ -166,8 +169,16 @@ int main(void)
 	
 	action current_action = IDLE;
 	//position current_position = UNKNOWN;
-
-
+	
+	int16_t error = 0;
+	int16_t error_last = 0;
+	int16_t error_integrator = 0;
+	
+	int16_t control = 0;
+	
+	int16_t left_speed = 0;
+	int16_t right_speed = 0;
+	
 	//Scheduler variables
 	uint32_t t = 0;	
 
@@ -185,20 +196,12 @@ int main(void)
 	//make sure the pullups enabled
 	DDRD &= ~BIT(7);
 	PORTD |= BIT(7);
+	
 	while((PIND & BIT(7)))
 	{
 		continue;
 	}
-	
-	while(1)
-	{
-		
-		motor_set(255, 255);
-		_delay_ms(1000);
-		motor_stop();
-		motor_set(0, 0);
-		_delay_ms(1000);
-	}
+
 
     //set initial state
 	current_action = SWEEP_LEFT;
@@ -211,66 +214,73 @@ int main(void)
 		t = clock_get_ms();
 		
 		//Check for sweep action taking an unexpected amount of time. but dont check the very first sweep. 
-		/*
-		if ((current_action == SWEEP_LEFT | current_action == SWEEP_RIGHT) & (t != time_check_t_last) & (t > 1000))
+/*
+		if ((t != time_check_t_last) & (t > 2000))
 		{
 			time_check_t_last = t;
-			if ((t - t_last) > (del_t_last + SWEEP_TOLLERANCE))
+			if ((t - sweep_end_t_last) > (sweep_del_t_last + SWEEP_TIME_TOLLERANCE))
 			{
-				del_l_last = t - t_last;
-				current_action = IDLE;
-
+				motor_stop();
+				
 				//turn possible
-				if (currenct_action == SWEEP_LEFT)
-					current_position |= LEFT_POSSIBLE;
+				if (current_action == SWEEP_LEFT)
+					//current_position |= LEFT_POSSIBLE;
+					//can go left so do so.
+					sweep_left(DEFAULT_SPEED);
 				else if (current_action == SWEEP_RIGHT)
-					current_position |= RIGHT_POSSIBLE;
+					//current_position |= RIGHT_POSSIBLE;
+					if(level_get(sensor_front_value) == BLACK)
+						sweep_left(DEFAULT_SPEED);
+					else
+						sweep_right(DEFAULT_SPEED);	
+						*			
 			}
-		}
+		}		
 		*/
-		
+
 		//check if sensor update has any relevant changes
 		if (sensor_update_serviced == FALSE)
 		{
-			sensor_update_serviced = TRUE;	
+			sensor_update_serviced = TRUE;
 			
+			error = sensor_left_value - sensor_right_value; //error for proportional control
 			
+			control = error*KP + derivative(error, error_last, SAMPLE_PERIOD)*KD +
+							integrate(&error_integrator, error, error_last, SAMPLE_PERIOD);
+			
+			//need to go right, slow down right motor
+
+			left_speed = control*KP;
+			right_speed =  -control*KP;
+			
+			left_speed = regulate(left_speed, 255);
+			right_speed = regulate(right_speed, 255);
+
+
+
+			sprintf(buffer, "left speed: %d, right speed: %d control: %d \n", left_speed, right_speed, control);
+			UART_Write(buffer);
+						
+			//No motor control following, motor controll is done by PID, furthur on
 			if (sensor_left_value + SENSOR_TOLLERANCE < sensor_right_value)
 			{
-				UART_Write("R");
-				motor_set(DEFAULT_SPEED, 0);
+				if (current_action == SWEEP_LEFT)
+					sweep_ended = TRUE;
+				UART_Write("sweep right: ");
+				current_action = SWEEP_RIGHT;
 			}
 			else if(sensor_right_value + SENSOR_TOLLERANCE< sensor_left_value)
-			{
-				UART_Write("L");
-				motor_set(0, DEFAULT_SPEED);
-			}
-			
-			sprintf(buffer, "%u, %u \n", sensor_left_value, sensor_right_value);
-			UART_Write(buffer);
-
-/*
-			//check for end of left sweep 									todo: modify to use PID based on differential
-            if ((current_action == SWEEP_LEFT) & (sensor_left_value < sensor_right_value-SENSOR_TOLLERANCE))
-            {
-				UART_Write("sweep right: ");	
-				current_action = SWEEP_RIGHT;
-            	sweep_right(DEFAULT_SPEED);
-	            sweep_ended = TRUE;
-            }
-
-            //check for end of right sweep
-			else if ((current_action == SWEEP_RIGHT) & (sensor_right_value < sensor_left_value-SENSOR_TOLLERANCE))
-			{
+			{				
+				if (current_action == SWEEP_RIGHT)
+					sweep_ended = TRUE;
 				UART_Write("sweep left: ");
 				current_action = SWEEP_LEFT;
-				sweep_left(DEFAULT_SPEED);
-				sweep_ended = TRUE;
 			}
-			*/
-
-			//check for 
-            //if (sensor_front_value  < BLACK_THRESHOLD)
+			
+			motor_set(left_speed, right_speed);
+			
+			//sprintf(buffer, "%u, %u \n", sensor_left_value, sensor_right_value);
+			//UART_Write(buffer);
 
             //If a new sweep started this cycle, find how long it took
             if (sweep_ended)
@@ -278,10 +288,10 @@ int main(void)
 				sweep_ended = FALSE;
 				sweep_del_t_last = t - sweep_end_t_last; 
 				sweep_end_t_last = t;
-				sprintf(buffer, "sweep took: %u left: %u right: %u \n ", sweep_del_t_last, sensor_left_value, sensor_right_value);
-				UART_Write(buffer);
+				//sprintf(buffer, "sweep took: %u left: %u right: %u \n ", sweep_del_t_last, sensor_left_value, sensor_right_value);
+				//UART_Write(buffer);
 				writeCircBuf(&sweep_times, sweep_del_t_last);
-			}		
+			}
 		}
 		
 		//Sensor value update
@@ -319,6 +329,28 @@ int main(void)
 	}
 }
 
+int16_t integrate(int16_t* integrator, uint16_t current_value, uint16_t last_value, int16_t delta_t)
+{
+	*integrator += (current_value-last_value)*delta_t;
+	*integrator = regulate(integrator, WINDUP_LIMIT);
+	return integrator;
+}
+
+int16_t derivative(uint16_t current_value, uint16_t last_value, uint16_t delta_t)
+{
+	return (current_value-last_value)/delta_t;
+}
+
+int16_t regulate(int16_t value, uint16_t limit)
+{
+	if (value > limit)
+		return limit;
+	else if (value < -limit)
+		return -limit;
+	else
+		return value;
+}
+
 level level_get(uint16_t value)
 {
 	if (value < GREY_THRESHOLD)
@@ -343,12 +375,12 @@ level_action action_get(level current, level last)
 
 void sweep_left(int16_t speed)
 {  
-    motor_set(speed*0*FF/100, speed);
+    motor_set(speed*FF/100, speed);
 }
 
 void sweep_right(int16_t speed)
 {
-    motor_set(speed, speed*0*FF/100);
+    motor_set(speed, speed*FF/100);
 }
 
 
