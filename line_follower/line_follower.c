@@ -24,26 +24,11 @@
 
 #define SAMPLE_PERIOD (CLOCK_RATE_HZ/SAMPLE_RATE)
 
+ #define MAZE_LOGIC_PERIOD (CLOCK_RATE_HZ/MAZE_LOGIC_RATE)
+
  //Application specific enums
  typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT, ON_WHITE, ON_BLACK} action;
 
-
-/*bitfield variable
-* 	Bit one indicates posibility of forward travel (1 = possible)
-	Bit two indicates left possible
-	Bit three indicates right possible
-*/
-/*
- typedef enum{
- 	STRAIGHT_POSSBLE = BIT(0),
- 	STRAIGHT_NOT_POSSIBLE = ~Bit(0),
- 	LEFT_POSSIBLE BIT(1),
- 	LEFT_NOT_POSSLBE ~BIT(1),
- 	RIGHT_POSSIBLE BIT(2),
- 	RIGHT_NOT_POSSIBLE ~BIT(2),
- 	UNKNOWN BIT(7)
- } position;
-*/
 
 //System Includes
 #include "system.h"
@@ -102,6 +87,9 @@ void sweep_right(int16_t turn_speed);
 //reads sensors
 void sensor_update(uint8_t channel, circBuf_t* readings, uint16_t* sensor_value);
 
+// win the maze game
+void maze_completed(void);
+
 
 int main(void)
 {
@@ -147,6 +135,9 @@ int main(void)
 	initCircBuf(&sweep_times, SWEEP_TIME_MEMORY_LENGTH);
 	short sweep_del_t_last = 0;
 	short sweep_end_t_last = 0;
+	
+	//time when front sensor begins to see grey.
+	uint32_t grey_time_start = 0;
 
 	bool sweep_ended = FALSE;
 	//set high if the front sensor crosses the line
@@ -178,7 +169,7 @@ int main(void)
 	uint32_t t = 0;	
 
 	//Loop control time variables
-	uint32_t time_check_t_last = 0;
+	uint32_t maze_logic_t_last = 0;
 	uint32_t sample_t_last = 0;
 	uint32_t UART_t_last = 0;
 
@@ -191,6 +182,8 @@ int main(void)
 	DDRD &= ~BIT(7);
 	PORTD |= BIT(7);
 	
+	
+	//motor_set(128, 128);
 	while((PIND & BIT(7)))
 	{
 		continue;
@@ -209,58 +202,35 @@ int main(void)
 		                                                                                                                         
 		t = clock_get_ms();
 		
-		//Check for sweep action taking an unexpected amount of time. but dont check the very first sweep. 
-/*
-		if ((t != time_check_t_last) & (t > 2000))
-		{
-			time_check_t_last = t;
-			if ((t - sweep_end_t_last) > (sweep_del_t_last + SWEEP_TIME_TOLLERANCE))
-			{
-				motor_stop();
-				
-				//turn possible
-				if (current_action == SWEEP_LEFT)
-					//current_position |= LEFT_POSSIBLE;
-					//can go left so do so.
-					sweep_left(DEFAULT_SPEED);
-				else if (current_action == SWEEP_RIGHT)
-					//current_position |= RIGHT_POSSIBLE;
-					if(level_get(sensor_front_value) == BLACK)
-						sweep_left(DEFAULT_SPEED);
-					else
-						sweep_right(DEFAULT_SPEED);	
-						*			
-			}
-		}		
-		*/
-
-		//check if sensor update has any relevant changes
-		if (sensor_update_serviced == FALSE)
+		//check if a sensor update has occured
+		if ((sensor_update_serviced == FALSE) && 
+			(t%MAZE_LOGIC_PERIOD == 0) && (t != maze_logic_t_last))
 		{
 			sensor_update_serviced = TRUE;
-			
-			// An attempt at PID control
-			/*
-			error = sensor_left_value - sensor_right_value; //error for proportional control
-			
-			control = error*KP + derivative(error, error_last, SAMPLE_PERIOD)*KD +
-							integrate(&error_integrator, error, error_last, SAMPLE_PERIOD);
-			
-			//need to go right, slow down right motor, vice versa
 
-			left_turn_speed = control*KP;
-			right_turn_speed =  -control*KP;			
-			left_turn_speed = regulate(left_turn_speed, 255);
-			right_turn_speed = regulate(right_turn_speed, 255);
-			*/
-			
-
-			/*
+			// finishing condition is a grey read for a set period
 			if(is_grey(sensor_front_value) && front_crossed_grey == FALSE)
 			{
-				front_crossed_grey = TRUE;										//TODO: adjust so that finishing condition is a 1/2 whole sweeps on grey line
+				front_crossed_grey = TRUE;
+				grey_time_start = t;	                                   //TODO: adjust so that finishing condition is a 1/2 whole sweeps on grey line
 			}
-			*/
+			else if (is_grey(sensor_front_value) && front_crossed_grey == TRUE)
+			{
+				//
+				if ((grey_time_start + GREY_TIME) <= t )
+				{
+					// Finish line found. Stop robot.
+					maze_completed(); // wait for button push
+					front_crossed_grey = FALSE;
+				}
+
+				//front_crossed_grey = FALSE;
+			}
+			else
+			{
+				front_crossed_grey = FALSE;
+			}
+			
 			//check for false finish line
 			if(is_black(sensor_front_value)&&front_crossed_black == FALSE)
 			{
@@ -268,26 +238,19 @@ int main(void)
 				if(front_crossed_grey)
 					front_crossed_grey = FALSE; //false alarm
 			}
-			/*			
-			if(is_white(sensor_front_value)&&front_crossed_grey)
-			{
-				front_crossed_grey = FALSE; //false alarm
-			}
-			*/
-
-			
+	
 							
 					
 			//when both rear sensors go black, this indicates an intersection (turns included).
 			//try turning left.
-			if(is_black(sensor_left_value) && is_black(sensor_right_value))
+			// ERROR: this statement never turns right. Something is wrong!
+			/*if(is_black(sensor_left_value) && is_black(sensor_right_value))
 			{
-				
 				sweep_left(255);				
 				PORTB |= BIT(3);
 				PORTB |= BIT(4);
 				current_action = ON_BLACK;
-			}
+			}*/
 			
 			//when both sensors are completely white this indicates a dead end or a tape-gap
 			else if (is_white(sensor_left_value) && is_white(sensor_right_value))
@@ -360,6 +323,7 @@ int main(void)
 				
 			}
 		}
+		// Paced loop tasks
 		
 		//Sensor value update
  		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
@@ -373,7 +337,7 @@ int main(void)
 
 		}
 		
-		//display degug information
+		//display debug information
 		
 		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
 		{
@@ -490,4 +454,13 @@ void sensor_update(uint8_t channel, circBuf_t* readings, uint16_t* sensor_value)
     *sensor_value += new_value/ROLLING_AVERAGE_LENGTH;
     writeCircBuf(readings, new_value);
 }
-//65535
+
+void maze_completed(void)
+{
+	motor_stop();
+	led_set(0x0F);
+	while((PIND & BIT(7)))
+	{
+		continue;
+	}
+}

@@ -2,6 +2,7 @@
 #include "system.h"
 #include "led.h"
 
+// PC7, PB4, PB3, PB2. PB = 0001|1100
 #define PBLED 0x1C
 #define PCLED 0x80
 
@@ -24,7 +25,7 @@ void led_set(char p)
 	BIT(3)|
 	BIT(4)));		//& 0-2 -> 2->4
 	
-	//PB2, PB3, PB4, PB7
+	//PB2, PB3, PB4, PC7
 }
 
 void led_init(void)

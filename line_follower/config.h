@@ -8,9 +8,14 @@
 #define F_CPU 8000000
 #endif
 
-//ADC paramers
+//ADC sample rate
 #ifndef SAMPLE_RATE
 #define SAMPLE_RATE 200
+#endif
+
+//Rate at which sensors are checked for 
+#ifndef MAZE_LOGIC_RATE 
+#define MAZE_LOGIC_RATE 50
 #endif
 
 // buffer lengths
@@ -36,15 +41,17 @@
 
 #define SENSOR_TOLLERANCE 0
 
-#define DEFAULT_FORWARD_SPEED 100
-#define DEFAULT_SPEED 100
+#define DEFAULT_FORWARD_SPEED 50
+#define DEFAULT_SPEED 150
+
 #define MIN_TURN_SPEED 100
-#define MAX_TURN_SPEED 150
+#define MAX_TURN_SPEED 200
 #define FF 0 //forwardization factor %
 
 #define IDEAL_SWEEP_TIME 180
 #define SWEEP_TIME_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
 
+#define GREY_TIME 100
 
 typedef enum{BLACK, GREY, WHITE} level;
 typedef enum{NC, FALLEN, RISEN} level_action;
