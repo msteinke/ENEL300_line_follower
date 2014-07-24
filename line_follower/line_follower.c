@@ -283,7 +283,7 @@ int main(void)
 			if(is_black(sensor_left_value) && is_black(sensor_right_value))
 			{
 				
-				sweep_left(turn_speed);				
+				sweep_left(255);				
 				PORTB |= BIT(3);
 				PORTB |= BIT(4);
 				current_action = ON_BLACK;
@@ -347,16 +347,16 @@ int main(void)
 				{
 					UART_Write("| - |");
 					//forward_speed += 5;
-					turn_speed -= 5;
+					turn_speed += 5;
 				}					
 				if (sweep_del_t_last < IDEAL_SWEEP_TIME)
 				{
 					UART_Write("| + |");
 					//forward_speed -= 5;
-					turn_speed += 5;
+					turn_speed -= 5;
 				}					
 					
-				turn_speed = regulate_within(turn_speed, MIN_SPEED, MAX_SPEED);
+				turn_speed = regulate_within(turn_speed, MIN_TURN_SPEED, MAX_TURN_SPEED);
 				
 			}
 		}

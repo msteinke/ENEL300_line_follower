@@ -36,13 +36,13 @@
 
 #define SENSOR_TOLLERANCE 0
 
-#define DEFAULT_FORWARD_SPEED 0
-#define DEFAULT_SPEED 150
-#define MIN_SPEED 170
-#define MAX_SPEED 255
+#define DEFAULT_FORWARD_SPEED 100
+#define DEFAULT_SPEED 100
+#define MIN_TURN_SPEED 100
+#define MAX_TURN_SPEED 150
 #define FF 0 //forwardization factor %
 
-#define IDEAL_SWEEP_TIME 170
+#define IDEAL_SWEEP_TIME 180
 #define SWEEP_TIME_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
 
 
