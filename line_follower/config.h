@@ -15,13 +15,13 @@
 
 //Rate at which sensors are checked for 
 #ifndef MAZE_LOGIC_RATE 
-#define MAZE_LOGIC_RATE 50
+#define MAZE_LOGIC_RATE 100 
 #endif
 
 // buffer lengths
 
 #ifndef ROLLING_AVERAGE_LENGTH
-#define ROLLING_AVERAGE_LENGTH 3
+#define ROLLING_AVERAGE_LENGTH 5
 #endif
 
 #ifndef SWEEP_TIME_MEMORY_LENGTH 
@@ -39,13 +39,17 @@
 
 // Maze solving constants
 
+//State enums
+typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT, ON_WHITE, ON_BLACK, TURNING_LEFT, TRYING_LEFT} action;
+
 #define SENSOR_TOLLERANCE 0
 
 #define DEFAULT_FORWARD_SPEED 50
 #define DEFAULT_SPEED 150
+#define FF 0
 
 #define MIN_TURN_SPEED 100
-#define MAX_TURN_SPEED 200
+#define MAX_TURN_SPEED (255 - DEFAULT_FORWARD_SPEED)
 
 #define IDEAL_SWEEP_TIME 180
 #define SWEEP_TIME_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected

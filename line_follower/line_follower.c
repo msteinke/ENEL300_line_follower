@@ -2,10 +2,7 @@
  * line_follower.c
  *
  * Created: 1/07/2014 3:42:31 p.m.
- *  Author: martin
- *
- * Comparator does funny stuff with portb, for PorbD io, 
- * check comparator.c
+ *  Author: Sam
  */
 
 #include "config.h"
@@ -26,8 +23,7 @@
 
  #define MAZE_LOGIC_PERIOD (CLOCK_RATE_HZ/MAZE_LOGIC_RATE)
 
- //Application specific enums
- typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT, ON_WHITE, ON_BLACK} action;
+
 
 
 //System Includes
@@ -90,6 +86,8 @@ void sensor_update(uint8_t channel, circBuf_t* readings, uint16_t* sensor_value)
 // win the maze game
 void maze_completed(void);
 
+void panic(void);
+
 
 int main(void)
 {
@@ -138,6 +136,7 @@ int main(void)
 	
 	//time when front sensor begins to see grey.
 	uint32_t grey_time_start = 0;
+	
 	uint32_t is_lost = 0;
 	uint32_t is_lost_start = 0;
 
@@ -149,13 +148,16 @@ int main(void)
 
 	bool sensor_update_serviced = TRUE;
 	
-	bool buffer_updated = FALSE;
-	
+	bool buffer_updated = FALSE;	
 	
 	action current_action = IDLE;
 	
 	int16_t forward_speed = DEFAULT_FORWARD_SPEED;
 	int16_t turn_speed = DEFAULT_SPEED;
+	
+	uint16_t heading = 0; //number of left turns from north
+	// North being the initial heading of the robot
+	// it doest have a magnetometer.
 	
 	//PID variables (not used)
 	int16_t error = 0;
@@ -191,17 +193,7 @@ int main(void)
 		continue;
 	}
 	
-	
 
-	/*
-    //set initial state
-	current_action = SWEEP_LEFT;
-	sweep_left(DEFAULT_SPEED);	
-	*/
-	while(1)
-	{
-		motor_set(255, 255);
-	}
 	
 	while(1)
 	{
@@ -246,9 +238,11 @@ int main(void)
 					front_crossed_grey = FALSE; //false alarm
 			}
 	
-			
+			//currently unused. need to figure out good panic initiation condition
 			if(is_lost)
+			{
 				panic();
+			}				
 			// LINE FINDING ROUTINE IS REALLY GOOD, BUT IT TRIGGERS ON THE SAME
 			// COMDITION USED TO DETECT A DEAD END. 
 
@@ -290,16 +284,28 @@ int main(void)
 			//turning routine			
 			
 			//when both rear sensors go black, this indicates an intersection (turns included).
-			//try turning left.
-			// ERROR: this statement never turns right. Something is wrong!
-			// It did work, could it be the black threshold value perhapse?
 			if(is_black(sensor_left_value) && is_black(sensor_right_value))
 			{
-				sweep_left(255);	
-				//sweep_right(255);			
+				/*
+				//left turn is possible, continue turning left
+				if(current_action == SWEEP_LEFT)
+				{
+					current_action == TURNING_LEFT;
+					heading -= 1;
+				}
+
+				//right turn is possible. try turning left.
+				if(current_action == SWEEP_RIGHT)
+				{
+					current_action = TRYING_LEFT;
+					motor_set(0, 255);									
+				}
+				*/
+				sweep_ended = TRUE;
+				motor_set(0, 255);									
 				PORTB |= BIT(3);
 				PORTB |= BIT(4);
-				current_action = ON_BLACK;
+				//current_action = ON_BLACK;
 			}
 
 			//dead-end - gap routine
@@ -307,14 +313,15 @@ int main(void)
 			//when both sensors are completely white this indicates a dead end or a tape-gap
 			else if (is_white(sensor_left_value) && is_white(sensor_right_value))
 			{
+				sweep_ended = TRUE;
 				PORTB &= ~BIT(3);
 				PORTB &= ~BIT(4);
-				current_action = ON_WHITE;
+				//current_action = ON_WHITE;
 				//Check if the front sensor is on black, or has been during the last sweep.
 				if(is_black(sensor_front_value) | front_crossed_black)
-					motor_set(turn_speed, turn_speed);
+					motor_set(255, 255);
 				else if (is_white(sensor_front_value))
-					motor_set(turn_speed, -turn_speed);
+					motor_set(-255, 255);
 			}
 
 			// Line following routine										
@@ -347,6 +354,7 @@ int main(void)
             {
             	//reset front black crossing detection variable
 				sweep_ended = FALSE;
+				
 				if (front_crossed_black)
 					front_crossed_black = FALSE;
 
@@ -358,13 +366,13 @@ int main(void)
 				//adjust turn_speed for battery level.
 				if (sweep_del_t_last > IDEAL_SWEEP_TIME)
 				{
-					UART_Write("| - |");
+					//UART_Write("| - |");
 					//forward_speed += 5;
 					turn_speed += 5;
 				}					
 				if (sweep_del_t_last < IDEAL_SWEEP_TIME)
 				{
-					UART_Write("| + |");
+					//UART_Write("| + |");
 					//forward_speed -= 5;
 					turn_speed -= 5;
 				}					
@@ -391,32 +399,30 @@ int main(void)
 		{
 			UART_t_last = t;
 			
+			sprintf(buffer, "sweep_time: %u \n", sweep_del_t_last);
+			UART_Write(buffer);
+			/*
 			if(current_action == SWEEP_LEFT)
-			{
 				UART_Write("sweep left");
-			}
 			if(current_action == SWEEP_RIGHT)
-			{
 				UART_Write("sweep right");
-			}
 			if(current_action == ON_BLACK)
-			{
 				UART_Write("on black");
-			}
 			if(current_action == ON_WHITE)
-			{
 				UART_Write("on white");
-			}
-			sprintf(buffer, "L: %u F: %u R: %u", sensor_left_value, sensor_front_valu), sensor_right_valu));
+
+			sprintf(buffer, "L: %u F: %u R: %u", sensor_left_value, sensor_front_value, sensor_right_value);
 			UART_Write(buffer);
 			UART_Write("\n");
+			*/
+		}
 	}
 }
 
 int16_t integrate(int16_t* integrator, uint16_t current_value, uint16_t last_value, int16_t delta_t)
 {
 	*integrator += (current_value-last_value)*delta_t;
-	*integrator = regulate(integrator, WINDUP_LIMIT);
+	*integrator = regulate(*integrator, (uint16_t)WINDUP_LIMIT);
 	return integrator;
 }
 
@@ -499,4 +505,8 @@ void maze_completed(void)
 	{
 		continue;
 	}
+}
+
+void panic(void)
+{
 }
