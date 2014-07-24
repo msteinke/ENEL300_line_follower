@@ -13,6 +13,8 @@
 #define SAMPLE_RATE 200
 #endif
 
+// buffer lengths
+
 #ifndef ROLLING_AVERAGE_LENGTH
 #define ROLLING_AVERAGE_LENGTH 5
 #endif
@@ -21,8 +23,8 @@
 #define SWEEP_TIME_MEMORY_LENGTH 5
 #endif
 
-#define DEFAULT_SPEED 0
-#define FF 0 //forwardization factor %
+
+//PID constants (not used)
 
 #define KP 20/100
 #define KI 1/100
@@ -30,15 +32,24 @@
 
 #define WINDUP_LIMIT 50
 
+// Maze solving constants
+
 #define SENSOR_TOLLERANCE 0
 
-#define SWEEP_TIME_TOLLERANCE 100 //miliseconds of sweep tollerenace before edge is not where expected
+#define DEFAULT_FORWARD_SPEED 0
+#define DEFAULT_SPEED 150
+#define MIN_SPEED 170
+#define MAX_SPEED 255
+#define FF 0 //forwardization factor %
+
+#define IDEAL_SWEEP_TIME 170
+#define SWEEP_TIME_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
 
 
 typedef enum{BLACK, GREY, WHITE} level;
 typedef enum{NC, FALLEN, RISEN} level_action;
 	
-#define GREY_THRESHOLD 50
+#define GREY_THRESHOLD 20
 #define BLACK_THRESHOLD 240
 
 

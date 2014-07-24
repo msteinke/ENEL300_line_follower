@@ -2,7 +2,8 @@
 #include "system.h"
 #include "led.h"
 
-#define PBLED 0x9C
+#define PBLED 0x1C
+#define PCLED 0x80
 
 
 void led_set_one(char led, char state)
@@ -29,4 +30,5 @@ void led_set(char p)
 void led_init(void)
 {
 	DDRB |= PBLED;
+	DDRC |= BIT(7);
 }

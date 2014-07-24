@@ -7,60 +7,25 @@
  * Comparator does funny stuff with portb, for PorbD io, 
  * check comparator.c
  */
-/*
-#include "config.h"
-
-//System Includes
-#include "system.h"
-#include <avr/io.h>
-#include <avr/interrupt.h>
-#include "motor.h"
-
-
-
-int main(void)
-{
-	system_init();
-	sei();
-	motor_init();
-	//adc_init();
-	motor_testb();
-	
-	while (1)
-	{
-		continue;
-	}
-}	
-*/
-
-
-/*
- * line_follower.c
- *
- * Created: 1/07/2014 3:42:31 p.m.
- *  Author: martin
- *
- * Comparator does funny stuff with portb, for PorbD io, 
- * check comparator.c
- */
 
 #include "config.h"
 
 #define TRUE 1
 #define FALSE 0
 
-
-//Parameters
+//Config.h Dependant Parameters
 #ifdef ENABLE_UART
 #define UART_ENABLED 1
 #else
 #define UART_ENABLED 0
 #endif
+
 #define UART_PERIOD (CLOCK_RATE_HZ/UART_RATE)
+
 #define SAMPLE_PERIOD (CLOCK_RATE_HZ/SAMPLE_RATE)
 
  //Application specific enums
- typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT} action;
+ typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT, ON_WHITE, ON_BLACK} action;
 
 
 /*bitfield variable
@@ -94,25 +59,48 @@ int main(void)
 #include "adc.h"
 #include "circBuf.h"
 
+
  #define CHANNEL_SENSOR_LEFT AIN1
  #define CHANNEL_SENSOR_RIGHT AIN2
  #define CHANNEL_SENSOR_FRONT AIN3
 
 
-
 //PROTOTYPES
+//PID numerical integral and derivative functions
 int16_t integrate(int16_t* integrator, uint16_t current_value, uint16_t last_value, int16_t delta_t);
 int16_t derivative(uint16_t current_value, uint16_t last_value, uint16_t delta_t);
-int16_t regulate(int16_t value, uint16_t limit);
-level level_get(uint16_t value);
+
+//regulating function. limiting the abs value of value to limit
+int16_t regulate(uint16_t value, uint16_t limit);
+int16_t regulate_within(uint16_t value, uint16_t lower, uint16_t upper);
+
+
+level level_get(int16_t value);
+//Checks for rising and falling edges on quantises sensor levels
 level_action action_get(level current, level last);
 
-void sweep_left(int16_t speed);
-void sweep_right(int16_t speed);
+//quantises an analog value from sensor into levels defined in config.h
+bool is_black(int16_t value)
+{
+	return level_get(value) == BLACK;
+}
 
+bool is_grey(int16_t value)
+{
+	return level_get(value) == GREY;
+}
+
+bool is_white(int16_t value)
+{
+	return level_get(value) == WHITE;
+}
+
+//hard turn one way or the other
+void sweep_left(int16_t turn_speed);
+void sweep_right(int16_t turn_speed);
+
+//reads sensors
 void sensor_update(uint8_t channel, circBuf_t* readings, uint16_t* sensor_value);
-
-
 
 
 int main(void)
@@ -123,7 +111,7 @@ int main(void)
 	UART_Init(BAUD); UART_Write("\nInit"); //Show UART life
 	motor_init();
 	adc_init();
-	//motor_test();
+	
 	
 	//Enable Analog pins
 	adc_enable(CHANNEL_SENSOR_LEFT); 
@@ -131,9 +119,9 @@ int main(void)
     adc_enable(CHANNEL_SENSOR_FRONT);
 
     //Sensor state variables
-    level left; level right; level front; 
+    level left_level; level right_level; level front_level; 
 	//senor previous state variables for edge detection
-	level left_last; level right_last; level front_last;
+	level left_last_level; level right_last_level; level front_last_level;
 	// sensor action variables
 	level_action left_action = NC; 
 	level_action right_action = NC; 
@@ -161,6 +149,10 @@ int main(void)
 	short sweep_end_t_last = 0;
 
 	bool sweep_ended = FALSE;
+	//set high if the front sensor crosses the line
+	bool front_crossed_black = FALSE; 
+	//set high if front finds finish line
+	bool front_crossed_grey = FALSE;
 
 	bool sensor_update_serviced = TRUE;
 	
@@ -168,16 +160,19 @@ int main(void)
 	
 	
 	action current_action = IDLE;
-	//position current_position = UNKNOWN;
 	
+	int16_t forward_speed = DEFAULT_FORWARD_SPEED;
+	int16_t turn_speed = DEFAULT_SPEED;
+	
+	//PID variables (not used)
 	int16_t error = 0;
 	int16_t error_last = 0;
 	int16_t error_integrator = 0;
 	
 	int16_t control = 0;
 	
-	int16_t left_speed = 0;
-	int16_t right_speed = 0;
+	int16_t left_turn_speed = 0;
+	int16_t right_turn_speed = 0;
 	
 	//Scheduler variables
 	uint32_t t = 0;	
@@ -193,7 +188,6 @@ int main(void)
 	UART_Write("ialized\n");
 
 	//wait for start command
-	//make sure the pullups enabled
 	DDRD &= ~BIT(7);
 	PORTD |= BIT(7);
 	
@@ -201,12 +195,14 @@ int main(void)
 	{
 		continue;
 	}
+	
+	
 
-
+	/*
     //set initial state
 	current_action = SWEEP_LEFT;
 	sweep_left(DEFAULT_SPEED);	
-
+	*/
 	
 	while(1)
 	{
@@ -243,41 +239,88 @@ int main(void)
 		{
 			sensor_update_serviced = TRUE;
 			
+			// An attempt at PID control
+			/*
 			error = sensor_left_value - sensor_right_value; //error for proportional control
 			
 			control = error*KP + derivative(error, error_last, SAMPLE_PERIOD)*KD +
 							integrate(&error_integrator, error, error_last, SAMPLE_PERIOD);
 			
-			//need to go right, slow down right motor
+			//need to go right, slow down right motor, vice versa
 
-			left_speed = control*KP;
-			right_speed =  -control*KP;
+			left_turn_speed = control*KP;
+			right_turn_speed =  -control*KP;			
+			left_turn_speed = regulate(left_turn_speed, 255);
+			right_turn_speed = regulate(right_turn_speed, 255);
+			*/
 			
-			left_speed = regulate(left_speed, 255);
-			right_speed = regulate(right_speed, 255);
 
-
-
-			sprintf(buffer, "left speed: %d, right speed: %d control: %d \n", left_speed, right_speed, control);
-			UART_Write(buffer);
-						
-			//No motor control following, motor controll is done by PID, furthur on
-			if (sensor_left_value + SENSOR_TOLLERANCE < sensor_right_value)
+			/*
+			if(is_grey(sensor_front_value) && front_crossed_grey == FALSE)
 			{
+				front_crossed_grey = TRUE;										//TODO: adjust so that finishing condition is a 1/2 whole sweeps on grey line
+			}
+			*/
+			//check for false finish line
+			if(is_black(sensor_front_value)&&front_crossed_black == FALSE)
+			{
+				front_crossed_black = TRUE;
+				if(front_crossed_grey)
+					front_crossed_grey = FALSE; //false alarm
+			}
+			/*			
+			if(is_white(sensor_front_value)&&front_crossed_grey)
+			{
+				front_crossed_grey = FALSE; //false alarm
+			}
+			*/
+
+			
+							
+					
+			//when both rear sensors go black, this indicates an intersection (turns included).
+			//try turning left.
+			if(is_black(sensor_left_value) && is_black(sensor_right_value))
+			{
+				
+				sweep_left(turn_speed);				
+				PORTB |= BIT(3);
+				PORTB |= BIT(4);
+				current_action = ON_BLACK;
+			}
+			
+			//when both sensors are completely white this indicates a dead end or a tape-gap
+			else if (is_white(sensor_left_value) && is_white(sensor_right_value))
+			{
+				PORTB &= ~BIT(3);
+				PORTB &= ~BIT(4);
+				current_action = ON_WHITE;
+				//Check if the front sensor is on black, or has been during the last sweep.
+				if(is_black(sensor_front_value) | front_crossed_black)
+					motor_set(turn_speed, turn_speed);
+				else if (is_white(sensor_front_value))
+					motor_set(turn_speed, -turn_speed);
+			}										
+						
+			else if (sensor_left_value + SENSOR_TOLLERANCE < sensor_right_value)
+			{
+				PORTB &= ~BIT(3);
+				PORTB |= BIT(4);
 				if (current_action == SWEEP_LEFT)
 					sweep_ended = TRUE;
-				UART_Write("sweep right: ");
 				current_action = SWEEP_RIGHT;
+				motor_set(forward_speed + turn_speed, forward_speed);
 			}
 			else if(sensor_right_value + SENSOR_TOLLERANCE< sensor_left_value)
-			{				
+			{
+				PORTB |= BIT(3);
+				PORTB &= ~BIT(4);			
 				if (current_action == SWEEP_RIGHT)
 					sweep_ended = TRUE;
-				UART_Write("sweep left: ");
 				current_action = SWEEP_LEFT;
+				motor_set(forward_speed, forward_speed + turn_speed);
 			}
 			
-			motor_set(left_speed, right_speed);
 			
 			//sprintf(buffer, "%u, %u \n", sensor_left_value, sensor_right_value);
 			//UART_Write(buffer);
@@ -286,11 +329,35 @@ int main(void)
             if (sweep_ended)
             {
 				sweep_ended = FALSE;
-				sweep_del_t_last = t - sweep_end_t_last; 
+				if (front_crossed_black)
+					front_crossed_black = FALSE;
+					/*
+				if (front_crossed_grey)	//stop
+					while(1)
+					{
+						continue;
+					}
+					*/
+				sweep_del_t_last = t - sweep_end_t_last;
 				sweep_end_t_last = t;
-				//sprintf(buffer, "sweep took: %u left: %u right: %u \n ", sweep_del_t_last, sensor_left_value, sensor_right_value);
-				//UART_Write(buffer);
 				writeCircBuf(&sweep_times, sweep_del_t_last);
+				
+				//adjust turn_speed for battery level.
+				if (sweep_del_t_last > IDEAL_SWEEP_TIME)
+				{
+					UART_Write("| - |");
+					//forward_speed += 5;
+					turn_speed -= 5;
+				}					
+				if (sweep_del_t_last < IDEAL_SWEEP_TIME)
+				{
+					UART_Write("| + |");
+					//forward_speed -= 5;
+					turn_speed += 5;
+				}					
+					
+				turn_speed = regulate_within(turn_speed, MIN_SPEED, MAX_SPEED);
+				
 			}
 		}
 		
@@ -307,23 +374,40 @@ int main(void)
 		}
 		
 		//display degug information
-		/*
+		
 		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
 		{
+			UART_t_last = t;
 			
-
-			
-			//sprintf(buffer, "%u, %u, %u, %u \n", sensor_left_value , sensor_right_value , sensor_front_value, sweep_del_t_last);
-			if (buffer_updated)
+			if(current_action == SWEEP_LEFT)
 			{
-				sprintf(buffer, "Sensors: %u, %u, %u, %u \n", sensor_left_value , sensor_right_value , sensor_front_value);
-				UART_Write(buffer);
-				buffer_updated = FALSE;
-
+				UART_Write("sweep left");
 			}
+			if(current_action == SWEEP_RIGHT)
+			{
+				UART_Write("sweep right");
+			}
+			if(current_action == ON_BLACK)
+			{
+				UART_Write("on black");
+			}
+			if(current_action == ON_WHITE)
+			{
+				UART_Write("on white");
+			}
+			sprintf(buffer, "| sweep time: %u turn_speed : %u", sweep_del_t_last, turn_speed);
+			UART_Write(buffer);
+			UART_Write("\n");
+			/*
+			sprintf(buffer, "Sensors: %u, %u, %u, %u \n", sensor_left_value , sensor_right_value , sensor_front_value);
+			UART_Write(buffer);
+			buffer_updated = FALSE;
+			*/
+
+
 			
  		}
-		*/
+		
 		 
 		
 	}
@@ -341,7 +425,7 @@ int16_t derivative(uint16_t current_value, uint16_t last_value, uint16_t delta_t
 	return (current_value-last_value)/delta_t;
 }
 
-int16_t regulate(int16_t value, uint16_t limit)
+int16_t regulate(uint16_t value, uint16_t limit)
 {
 	if (value > limit)
 		return limit;
@@ -351,7 +435,17 @@ int16_t regulate(int16_t value, uint16_t limit)
 		return value;
 }
 
-level level_get(uint16_t value)
+int16_t regulate_within(uint16_t value, uint16_t lower, uint16_t upper)
+{
+	if (value > upper)
+		return upper;
+	if (value < lower)
+		return lower;
+	else
+		return value;
+}
+
+level level_get(int16_t value)
 {
 	if (value < GREY_THRESHOLD)
 		return WHITE;
@@ -373,14 +467,14 @@ level_action action_get(level current, level last)
 
 
 
-void sweep_left(int16_t speed)
+void sweep_left(int16_t turn_speed)
 {  
-    motor_set(speed*FF/100, speed);
+    motor_set(turn_speed*0*FF/100, turn_speed);
 }
 
-void sweep_right(int16_t speed)
+void sweep_right(int16_t turn_speed)
 {
-    motor_set(speed, speed*FF/100);
+    motor_set(turn_speed, turn_speed*0*FF/100);
 }
 
 
