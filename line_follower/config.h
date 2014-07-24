@@ -46,7 +46,6 @@
 
 #define MIN_TURN_SPEED 100
 #define MAX_TURN_SPEED 200
-#define FF 90 //forwardization factor %
 
 #define IDEAL_SWEEP_TIME 180
 #define SWEEP_TIME_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected

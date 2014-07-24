@@ -198,6 +198,10 @@ int main(void)
 	current_action = SWEEP_LEFT;
 	sweep_left(DEFAULT_SPEED);	
 	*/
+	while(1)
+	{
+		motor_set(255, 255);
+	}
 	
 	while(1)
 	{
@@ -233,16 +237,23 @@ int main(void)
 				front_crossed_grey = FALSE;
 			}
 			
-			//check for false finish line
+			//see if the front sensor crosses the line in case we run into a gap
 			if(is_black(sensor_front_value)&&front_crossed_black == FALSE)
 			{
 				front_crossed_black = TRUE;
+				//check for false finish line
 				if(front_crossed_grey)
 					front_crossed_grey = FALSE; //false alarm
 			}
 	
-							
+			
+			if(is_lost)
+				panic();
+			// LINE FINDING ROUTINE IS REALLY GOOD, BUT IT TRIGGERS ON THE SAME
+			// COMDITION USED TO DETECT A DEAD END. 
+
 			// check if it is completely lost
+			/*
 			if(is_white(sensor_left_value) && 
 				is_white(sensor_right_value) && 
 				is_white(sensor_front_value) && 
@@ -274,11 +285,14 @@ int main(void)
 			{
 				is_lost = FALSE;
 			}
-			
+			*/
+
+			//turning routine			
 			
 			//when both rear sensors go black, this indicates an intersection (turns included).
 			//try turning left.
 			// ERROR: this statement never turns right. Something is wrong!
+			// It did work, could it be the black threshold value perhapse?
 			if(is_black(sensor_left_value) && is_black(sensor_right_value))
 			{
 				sweep_left(255);	
@@ -287,6 +301,8 @@ int main(void)
 				PORTB |= BIT(4);
 				current_action = ON_BLACK;
 			}
+
+			//dead-end - gap routine
 			
 			//when both sensors are completely white this indicates a dead end or a tape-gap
 			else if (is_white(sensor_left_value) && is_white(sensor_right_value))
@@ -299,7 +315,9 @@ int main(void)
 					motor_set(turn_speed, turn_speed);
 				else if (is_white(sensor_front_value))
 					motor_set(turn_speed, -turn_speed);
-			}										
+			}
+
+			// Line following routine										
 						
 			else if (sensor_left_value + SENSOR_TOLLERANCE < sensor_right_value)
 			{
@@ -327,16 +345,12 @@ int main(void)
             //If a new sweep started this cycle, find how long it took
             if (sweep_ended)
             {
+            	//reset front black crossing detection variable
 				sweep_ended = FALSE;
 				if (front_crossed_black)
 					front_crossed_black = FALSE;
-					/*
-				if (front_crossed_grey)	//stop
-					while(1)
-					{
-						continue;
-					}
-					*/
+
+				//Calculate sweep time
 				sweep_del_t_last = t - sweep_end_t_last;
 				sweep_end_t_last = t;
 				writeCircBuf(&sweep_times, sweep_del_t_last);
@@ -359,7 +373,6 @@ int main(void)
 				
 			}
 		}
-		// Paced loop tasks
 		
 		//Sensor value update
  		if((t%SAMPLE_PERIOD == 0) & (t!=sample_t_last))
@@ -373,8 +386,7 @@ int main(void)
 
 		}
 		
-		//display debug information
-		
+		//display debug information		
 		if((t%UART_PERIOD == 0) & (t != UART_t_last) & UART_ENABLED)
 		{
 			UART_t_last = t;
@@ -395,22 +407,9 @@ int main(void)
 			{
 				UART_Write("on white");
 			}
-			//sprintf(buffer, "| sweep time: %u turn_speed : %u", sweep_del_t_last, turn_speed);
-			sprintf(buffer, "L: %u F: %u R: %u", level_get(sensor_left_value), level_get(sensor_front_value), level_get(sensor_right_value));
+			sprintf(buffer, "L: %u F: %u R: %u", sensor_left_value, sensor_front_valu), sensor_right_valu));
 			UART_Write(buffer);
 			UART_Write("\n");
-			/*
-			sprintf(buffer, "Sensors: %u, %u, %u, %u \n", sensor_left_value , sensor_right_value , sensor_front_value);
-			UART_Write(buffer);
-			buffer_updated = FALSE;
-			*/
-
-
-			
- 		}
-		
-		 
-		
 	}
 }
 
