@@ -138,6 +138,8 @@ int main(void)
 	
 	//time when front sensor begins to see grey.
 	uint32_t grey_time_start = 0;
+	uint32_t is_lost = 0;
+	uint32_t is_lost_start = 0;
 
 	bool sweep_ended = FALSE;
 	//set high if the front sensor crosses the line
@@ -240,17 +242,51 @@ int main(void)
 			}
 	
 							
-					
+			// check if it is completely lost
+			if(is_white(sensor_left_value) && 
+				is_white(sensor_right_value) && 
+				is_white(sensor_front_value) && 
+				is_lost == FALSE)
+			{
+				is_lost = TRUE;
+				is_lost_start = t;
+			}
+			else if (is_white(sensor_left_value) &&
+					is_white(sensor_right_value) &&
+					is_white(sensor_front_value) && 
+					is_lost == TRUE)
+			{
+				if ((is_lost_start + LOST_TIME) <= t )
+				{
+					// Yes, the robot is lost. Run lost routine.
+					// lost_func();
+					motor_set(-127, -255);
+					is_lost_start = clock_get_ms();
+					while((clock_get_ms() - is_lost_start) < LOST_TIME*2 )
+					{
+						continue;
+					}					
+					sweep_right(255);
+					is_lost = FALSE;
+				}
+			}
+			else
+			{
+				is_lost = FALSE;
+			}
+			
+			
 			//when both rear sensors go black, this indicates an intersection (turns included).
 			//try turning left.
 			// ERROR: this statement never turns right. Something is wrong!
-			/*if(is_black(sensor_left_value) && is_black(sensor_right_value))
+			if(is_black(sensor_left_value) && is_black(sensor_right_value))
 			{
-				sweep_left(255);				
+				sweep_left(255);	
+				//sweep_right(255);			
 				PORTB |= BIT(3);
 				PORTB |= BIT(4);
 				current_action = ON_BLACK;
-			}*/
+			}
 			
 			//when both sensors are completely white this indicates a dead end or a tape-gap
 			else if (is_white(sensor_left_value) && is_white(sensor_right_value))
@@ -359,7 +395,8 @@ int main(void)
 			{
 				UART_Write("on white");
 			}
-			sprintf(buffer, "| sweep time: %u turn_speed : %u", sweep_del_t_last, turn_speed);
+			//sprintf(buffer, "| sweep time: %u turn_speed : %u", sweep_del_t_last, turn_speed);
+			sprintf(buffer, "L: %u F: %u R: %u", level_get(sensor_left_value), level_get(sensor_front_value), level_get(sensor_right_value));
 			UART_Write(buffer);
 			UART_Write("\n");
 			/*
@@ -433,12 +470,12 @@ level_action action_get(level current, level last)
 
 void sweep_left(int16_t turn_speed)
 {  
-    motor_set(turn_speed*0*FF/100, turn_speed);
+    motor_set(turn_speed*FF/100, turn_speed);
 }
 
 void sweep_right(int16_t turn_speed)
 {
-    motor_set(turn_speed, turn_speed*0*FF/100);
+    motor_set(turn_speed, turn_speed*FF/100);
 }
 
 

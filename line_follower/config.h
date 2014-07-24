@@ -21,7 +21,7 @@
 // buffer lengths
 
 #ifndef ROLLING_AVERAGE_LENGTH
-#define ROLLING_AVERAGE_LENGTH 5
+#define ROLLING_AVERAGE_LENGTH 3
 #endif
 
 #ifndef SWEEP_TIME_MEMORY_LENGTH 
@@ -46,17 +46,19 @@
 
 #define MIN_TURN_SPEED 100
 #define MAX_TURN_SPEED 200
-#define FF 0 //forwardization factor %
+#define FF 90 //forwardization factor %
 
 #define IDEAL_SWEEP_TIME 180
 #define SWEEP_TIME_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
 
 #define GREY_TIME 100
+#define LOST_TIME 500
 
 typedef enum{BLACK, GREY, WHITE} level;
 typedef enum{NC, FALLEN, RISEN} level_action;
-	
-#define GREY_THRESHOLD 20
+
+// GREY_THRESHOLD used to be 20
+#define GREY_THRESHOLD 100
 #define BLACK_THRESHOLD 240
 
 
