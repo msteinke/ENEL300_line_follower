@@ -16,6 +16,17 @@
 #define MOTOR_FWD 2
 #define MOTOR_RVSE 3
 
+
+// Pin Allocations
+#define MOTOR_PIN_L_FWD PIO_DEFINE(PORT_B, 1)
+#define MOTOR_PIN_L_RVSE PIO_DEFINE(PORT_B, 6)
+#define MOTOR_PIN_R_FWD PIO_DEFINE(PORT_B, 5)
+#define MOTOR_PIN_R_RVSE PIO_DEFINE(PORT_C, 7)
+
+#define MOTOR_PIN_L_PWM PIO_DEFINE(PORT_D, 0)
+#define MOTOR_PIN_R_PWM PIO_DEFINE(PORT_B, 7)
+
+
 /** Initialize motor PWM timers
 	@param none
 	@return none */

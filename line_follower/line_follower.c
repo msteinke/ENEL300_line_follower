@@ -57,8 +57,6 @@ int16_t regulate_within(uint16_t value, uint16_t lower, uint16_t upper);
 
 
 level level_get(int16_t value);
-//Checks for rising and falling edges on quantises sensor levels
-level_action action_get(level current, level last);
 
 //quantises an analog value from sensor into levels defined in config.h
 bool is_black(int16_t value)
@@ -104,14 +102,6 @@ int main(void)
     adc_enable(CHANNEL_SENSOR_RIGHT);	
     adc_enable(CHANNEL_SENSOR_FRONT);
 
-    //Sensor state variables
-    level left_level; level right_level; level front_level; 
-	//senor previous state variables for edge detection
-	level left_last_level; level right_last_level; level front_last_level;
-	// sensor action variables
-	level_action left_action = NC; 
-	level_action right_action = NC; 
-	level_action front_action = NC;
 	
 	//Sensor value variables
 	uint16_t sensor_left_value = 0; uint16_t sensor_right_value  = 0; uint16_t sensor_front_value  = 0;
@@ -136,9 +126,7 @@ int main(void)
 	
 	//time when front sensor begins to see grey.
 	uint32_t grey_time_start = 0;
-	
-	uint32_t is_lost = 0;
-	uint32_t is_lost_start = 0;
+
 
 	bool sweep_ended = FALSE;
 	//set high if the front sensor crosses the line
@@ -148,26 +136,10 @@ int main(void)
 
 	bool sensor_update_serviced = TRUE;
 	
-	bool buffer_updated = FALSE;	
-	
 	action current_action = IDLE;
 	
 	int16_t forward_speed = DEFAULT_FORWARD_SPEED;
 	int16_t turn_speed = DEFAULT_SPEED;
-	
-	uint16_t heading = 0; //number of left turns from north
-	// North being the initial heading of the robot
-	// it doest have a magnetometer.
-	
-	//PID variables (not used)
-	int16_t error = 0;
-	int16_t error_last = 0;
-	int16_t error_integrator = 0;
-	
-	int16_t control = 0;
-	
-	int16_t left_turn_speed = 0;
-	int16_t right_turn_speed = 0;
 	
 	//Scheduler variables
 	uint32_t t = 0;	
@@ -223,7 +195,6 @@ int main(void)
 					front_crossed_grey = FALSE;
 				}
 
-				//front_crossed_grey = FALSE;
 			}
 			else
 			{
@@ -237,37 +208,17 @@ int main(void)
 				//check for false finish line
 				if(front_crossed_grey)
 					front_crossed_grey = FALSE; //false alarm
-			}
-
-
-			//turning routine			
+			}	
 			
-			//when both rear sensors go black, this indicates an intersection (turns included).
+			// when both rear sensors go black, this indicates an intersection (turns included).
+			// try turning left
 			if(is_black(sensor_left_value) && is_black(sensor_right_value))
 			{
-				
-// 				//left turn is possible, continue turning left
-// 				if(current_action == SWEEP_LEFT)
-// 				{
-// 					current_action == TURNING_LEFT;
-// 					heading -= 1;
-// 				}
-// 
-// 				//right turn is possible. try turning left.
-// 				if(current_action == SWEEP_RIGHT)
-// 				{
-// 					current_action = TRYING_LEFT;
-// 					motor_set(0, 255);									
-// 				}
-				
 				sweep_ended = TRUE;
 				motor_set(0, 255);									
 				PORTB |= BIT(3);
 				PORTB |= BIT(4);
-				//current_action = ON_BLACK;
 			}
-
-			//dead-end - gap routine
 			
 			//when both sensors are completely white this indicates a dead end or a tape-gap
 			else if (is_white(sensor_left_value) && is_white(sensor_right_value))
@@ -281,10 +232,9 @@ int main(void)
 					motor_set(255, 255);
 				else if (is_white(sensor_front_value))
 					motor_set(-255, 255);
-			}
-
-			// Line following routine										
-						
+			}				
+			
+			//sweep to the side that reads the darkest value			
 			else if (sensor_left_value + SENSOR_TOLLERANCE < sensor_right_value)
 			{
 				PORTB &= ~BIT(3);
@@ -303,10 +253,6 @@ int main(void)
 				current_action = SWEEP_LEFT;
 				motor_set(forward_speed, forward_speed+ turn_speed);
 			}
-			
-			
-			//sprintf(buffer, "%u, %u \n", sensor_left_value, sensor_right_value);
-			//UART_Write(buffer);
 
             //If a new sweep started this cycle, find how long it took
             if (sweep_ended)
@@ -356,90 +302,29 @@ int main(void)
 			
 			sprintf(buffer, "sweep_time: %u \n", sweep_del_t_last);
 			UART_Write(buffer);
-			/*
-			if(current_action == SWEEP_LEFT)
-				UART_Write("sweep left");
-			if(current_action == SWEEP_RIGHT)
-				UART_Write("sweep right");
-			if(current_action == ON_BLACK)
-				UART_Write("on black");
-			if(current_action == ON_WHITE)
-				UART_Write("on white");
 
 			sprintf(buffer, "L: %u F: %u R: %u", sensor_left_value, sensor_front_value, sensor_right_value);
 			UART_Write(buffer);
 			UART_Write("\n");
-			*/
 		}
 	}
 }
 
-int16_t integrate(int16_t* integrator, uint16_t current_value, uint16_t last_value, int16_t delta_t)
-{
-	*integrator += (current_value-last_value)*delta_t;
-	*integrator = regulate(*integrator, (uint16_t)WINDUP_LIMIT);
-	return integrator;
-}
-
-int16_t derivative(uint16_t current_value, uint16_t last_value, uint16_t delta_t)
-{
-	return (current_value-last_value)/delta_t;
-}
-
-int16_t regulate(uint16_t value, uint16_t limit)
-{
-	if (value > limit)
-		return limit;
-	else if (value < -limit)
-		return -limit;
-	else
-		return value;
-}
-
-int16_t regulate_within(uint16_t value, uint16_t lower, uint16_t upper)
-{
-	if (value > upper)
-		return upper;
-	if (value < lower)
-		return lower;
-	else
-		return value;
-}
-
-level level_get(int16_t value)
-{
-	if (value < GREY_THRESHOLD)
-		return WHITE;
-	else if (value < BLACK_THRESHOLD)
-		return GREY;
-	else
-		return BLACK;
-}
-
-level_action action_get(level current, level last)
-{
-	if(current < last)
-		return FALLEN;
-	else if(current > last)
-		return RISEN;
-	else
-		return NC;
-}
-
-
+// Measures an adc value puts it into averaging buffer and maintains the average
 void sensor_update(uint8_t channel, circBuf_t* readings, uint16_t* sensor_value)
 {
-    //Read in analog values
+	//Read in analog values
 	uint16_t new_value = adc_measure(channel);
-    //Read value to be replaced from circular buffer
-    short val_replaced = readings->data[readings->windex];
-    //Remove value to be replaced from current average
-    *sensor_value -= val_replaced/ROLLING_AVERAGE_LENGTH;
-    //add new value to average and replace old value in buffer
-    *sensor_value += new_value/ROLLING_AVERAGE_LENGTH;
-    writeCircBuf(readings, new_value);
+	//Read value to be replaced from circular buffer
+	short val_replaced = readings->data[readings->windex];
+	//Remove value to be replaced from current average
+	*sensor_value -= val_replaced/ROLLING_AVERAGE_LENGTH;
+	//add new value to average and replace old value in buffer
+	*sensor_value += new_value/ROLLING_AVERAGE_LENGTH;
+	writeCircBuf(readings, new_value);
 }
 
+//stops and indicates completion. pushing HWB starts things up again.
 void maze_completed(void)
 {
 	motor_stop();
@@ -450,6 +335,38 @@ void maze_completed(void)
 	}
 }
 
-void panic(void)
+//regulates the absolute value of value to be less than limit
+int16_t regulate(uint16_t value, uint16_t limit)
 {
+	if (value > limit)
+		return limit;
+	else if (value < -limit)
+		return -limit;
+	else
+		return value;
 }
+
+// limits value to be within the upper and lower bounds given
+int16_t regulate_within(uint16_t value, uint16_t lower, uint16_t upper)
+{
+	if (value > upper)
+		return upper;
+	if (value < lower)
+		return lower;
+	else
+		return value;
+}
+
+//returns the quantised level of a sensor reading based on the 
+//thresholds defined in config.h
+level level_get(int16_t value)
+{
+	if (value < GREY_THRESHOLD)
+		return WHITE;
+	else if (value < BLACK_THRESHOLD)
+		return GREY;
+	else
+		return BLACK;
+}
+
+
