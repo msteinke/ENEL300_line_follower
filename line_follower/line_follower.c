@@ -206,6 +206,7 @@ int main(void)
 		{
 			sensor_update_serviced = TRUE;
 
+
 			// finishing condition is a grey read for a set period
 			if(is_grey(sensor_front_value) && front_crossed_grey == FALSE)
 			{
@@ -237,70 +238,28 @@ int main(void)
 				if(front_crossed_grey)
 					front_crossed_grey = FALSE; //false alarm
 			}
-	
-			//currently unused. need to figure out good panic initiation condition
-			if(is_lost)
-			{
-				panic();
-			}				
-			// LINE FINDING ROUTINE IS REALLY GOOD, BUT IT TRIGGERS ON THE SAME
-			// COMDITION USED TO DETECT A DEAD END. 
 
-			// check if it is completely lost
-			/*
-			if(is_white(sensor_left_value) && 
-				is_white(sensor_right_value) && 
-				is_white(sensor_front_value) && 
-				is_lost == FALSE)
-			{
-				is_lost = TRUE;
-				is_lost_start = t;
-			}
-			else if (is_white(sensor_left_value) &&
-					is_white(sensor_right_value) &&
-					is_white(sensor_front_value) && 
-					is_lost == TRUE)
-			{
-				if ((is_lost_start + LOST_TIME) <= t )
-				{
-					// Yes, the robot is lost. Run lost routine.
-					// lost_func();
-					motor_set(-127, -255);
-					is_lost_start = clock_get_ms();
-					while((clock_get_ms() - is_lost_start) < LOST_TIME*2 )
-					{
-						continue;
-					}					
-					sweep_right(255);
-					is_lost = FALSE;
-				}
-			}
-			else
-			{
-				is_lost = FALSE;
-			}
-			*/
 
 			//turning routine			
 			
 			//when both rear sensors go black, this indicates an intersection (turns included).
 			if(is_black(sensor_left_value) && is_black(sensor_right_value))
 			{
-				/*
-				//left turn is possible, continue turning left
-				if(current_action == SWEEP_LEFT)
-				{
-					current_action == TURNING_LEFT;
-					heading -= 1;
-				}
-
-				//right turn is possible. try turning left.
-				if(current_action == SWEEP_RIGHT)
-				{
-					current_action = TRYING_LEFT;
-					motor_set(0, 255);									
-				}
-				*/
+				
+// 				//left turn is possible, continue turning left
+// 				if(current_action == SWEEP_LEFT)
+// 				{
+// 					current_action == TURNING_LEFT;
+// 					heading -= 1;
+// 				}
+// 
+// 				//right turn is possible. try turning left.
+// 				if(current_action == SWEEP_RIGHT)
+// 				{
+// 					current_action = TRYING_LEFT;
+// 					motor_set(0, 255);									
+// 				}
+				
 				sweep_ended = TRUE;
 				motor_set(0, 255);									
 				PORTB |= BIT(3);
@@ -342,7 +301,7 @@ int main(void)
 				if (current_action == SWEEP_RIGHT)
 					sweep_ended = TRUE;
 				current_action = SWEEP_LEFT;
-				motor_set(forward_speed, forward_speed + turn_speed);
+				motor_set(forward_speed, forward_speed+ turn_speed);
 			}
 			
 			
@@ -366,14 +325,10 @@ int main(void)
 				//adjust turn_speed for battery level.
 				if (sweep_del_t_last > IDEAL_SWEEP_TIME)
 				{
-					//UART_Write("| - |");
-					//forward_speed += 5;
 					turn_speed += 5;
 				}					
 				if (sweep_del_t_last < IDEAL_SWEEP_TIME)
 				{
-					//UART_Write("| + |");
-					//forward_speed -= 5;
 					turn_speed -= 5;
 				}					
 					
@@ -469,18 +424,6 @@ level_action action_get(level current, level last)
 		return RISEN;
 	else
 		return NC;
-}
-
-
-
-void sweep_left(int16_t turn_speed)
-{  
-    motor_set(turn_speed*FF/100, turn_speed);
-}
-
-void sweep_right(int16_t turn_speed)
-{
-    motor_set(turn_speed, turn_speed*FF/100);
 }
 
 

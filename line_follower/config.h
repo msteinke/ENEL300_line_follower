@@ -42,26 +42,28 @@
 //State enums
 typedef enum{IDLE, SWEEP_LEFT, SWEEP_RIGHT, ON_WHITE, ON_BLACK, TURNING_LEFT, TRYING_LEFT} action;
 
-#define SENSOR_TOLLERANCE 0
 
-#define DEFAULT_FORWARD_SPEED 50
-#define DEFAULT_SPEED 150
-#define FF 0
 
-#define MIN_TURN_SPEED 100
+#define DEFAULT_FORWARD_SPEED 70
+#define DEFAULT_SPEED 170
+
+
+#define MIN_TURN_SPEED 170
 #define MAX_TURN_SPEED (255 - DEFAULT_FORWARD_SPEED)
 
-#define IDEAL_SWEEP_TIME 180
-#define SWEEP_TIME_TOLLERANCE 50 //miliseconds of sweep tollerenace before edge is not where expected
+#define IDEAL_SWEEP_TIME 400
 
-#define GREY_TIME 100
+#define GREY_TIME 200
 #define LOST_TIME 500
 
 typedef enum{BLACK, GREY, WHITE} level;
 typedef enum{NC, FALLEN, RISEN} level_action;
 
+
+#define SENSOR_TOLLERANCE 0
+
 // GREY_THRESHOLD used to be 20
-#define GREY_THRESHOLD 100
+#define GREY_THRESHOLD 60
 #define BLACK_THRESHOLD 240
 
 
